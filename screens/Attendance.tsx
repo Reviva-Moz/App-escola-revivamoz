@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import PageHeader from '../components/Header';
 import { CLASSES_DATA, STUDENTS_DATA, SUBJECTS_DATA, CLASS_CURRICULUM_DATA } from '../constants';
@@ -71,12 +70,12 @@ const Attendance: React.FC = () => {
       <Card className="mb-6">
         <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <div>
-            <label htmlFor="class-select" className="block text-sm font-medium text-gray-700 mb-1">Turma</label>
+            <label htmlFor="class-select" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Turma</label>
             <select
               id="class-select"
               value={selectedClassId}
               onChange={(e) => setSelectedClassId(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white"
+              className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white dark:bg-slate-700 dark:text-slate-100"
             >
               {CLASSES_DATA.map(cls => (
                 <option key={cls.id} value={cls.id}>{cls.name}</option>
@@ -84,12 +83,12 @@ const Attendance: React.FC = () => {
             </select>
           </div>
           <div>
-            <label htmlFor="subject-select" className="block text-sm font-medium text-gray-700 mb-1">Disciplina</label>
+            <label htmlFor="subject-select" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Disciplina</label>
             <select
               id="subject-select"
               value={selectedSubjectId}
               onChange={(e) => setSelectedSubjectId(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white"
+              className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white dark:bg-slate-700 dark:text-slate-100"
               disabled={subjectsForClass.length === 0}
             >
               {subjectsForClass.length > 0 ? (
@@ -102,13 +101,13 @@ const Attendance: React.FC = () => {
             </select>
           </div>
           <div>
-            <label htmlFor="date-select" className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+            <label htmlFor="date-select" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Data</label>
             <input
               type="date"
               id="date-select"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light"
+              className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light dark:bg-slate-700 dark:text-slate-100"
             />
           </div>
           <Button
@@ -122,8 +121,8 @@ const Attendance: React.FC = () => {
 
       <Card>
         <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-gray-500">
-                <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+            <table className="w-full text-sm text-left text-slate-500 dark:text-slate-400">
+                <thead className="text-xs text-slate-600 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-700/50">
                     <tr>
                         <th scope="col" className="px-6 py-3">Nome do Aluno</th>
                         <th scope="col" className="px-6 py-3 text-center">Status</th>
@@ -131,8 +130,8 @@ const Attendance: React.FC = () => {
                 </thead>
                 <tbody>
                     {studentsInClass.length > 0 ? studentsInClass.map((student: Student) => (
-                      <tr key={student.id} className="bg-white border-b hover:bg-gray-50">
-                          <td className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{student.name}</td>
+                      <tr key={student.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                          <td className="px-6 py-4 font-medium text-gray-900 dark:text-slate-100 whitespace-nowrap">{student.name}</td>
                           <td className="px-6 py-4">
                               <div className="flex flex-col sm:flex-row sm:justify-center sm:space-x-4 space-y-2 sm:space-y-0">
                                   {(['Presente', 'Ausente', 'Justificado'] as AttendanceStatus[]).map(status => (
@@ -153,7 +152,7 @@ const Attendance: React.FC = () => {
                       </tr>
                     )) : (
                       <tr>
-                        <td colSpan={2} className="text-center py-8 text-gray-500">Selecione uma turma para ver os alunos.</td>
+                        <td colSpan={2} className="text-center py-8 text-slate-500 dark:text-slate-400">Selecione uma turma para ver os alunos.</td>
                       </tr>
                     )}
                 </tbody>

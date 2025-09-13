@@ -32,7 +32,7 @@ const Teachers: React.FC = () => {
   );
 
   const teacherRows = filteredTeachers.map((teacher: Teacher) => [
-    <span className="font-medium text-gray-900">{teacher.name}</span>,
+    <span className="font-medium text-gray-900 dark:text-slate-100">{teacher.name}</span>,
     teacher.email,
     teacher.phone,
     teacher.qualifications,

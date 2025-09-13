@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
@@ -40,7 +39,7 @@ const Classes: React.FC = () => {
   );
 
   const classRows = filteredClasses.map((cls: Class) => [
-    <span className="font-medium text-gray-900">{cls.name}</span>,
+    <span className="font-medium text-gray-900 dark:text-slate-100">{cls.name}</span>,
     cls.year,
     cls.teacherName,
     cls.studentCount,

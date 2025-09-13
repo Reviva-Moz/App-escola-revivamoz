@@ -31,7 +31,7 @@ const Subjects: React.FC = () => {
   );
 
   const subjectRows = filteredSubjects.map((subject: Subject) => [
-    <span className="font-medium text-gray-900">{subject.name}</span>,
+    <span className="font-medium text-gray-900 dark:text-slate-100">{subject.name}</span>,
     subject.code,
     `${subject.workload} horas`,
     actionButtons(subject.id)

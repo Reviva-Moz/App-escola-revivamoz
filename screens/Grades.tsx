@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import PageHeader from '../components/Header';
 import { CLASSES_DATA, SUBJECTS_DATA, STUDENTS_DATA, GRADES_DATA, CLASS_CURRICULUM_DATA } from '../constants';
@@ -79,12 +78,12 @@ const Grades: React.FC = () => {
             <Card className="mb-6">
                 <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label htmlFor="class-select" className="block text-sm font-medium text-gray-700 mb-1">Turma</label>
+                        <label htmlFor="class-select" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Turma</label>
                         <select
                             id="class-select"
                             value={selectedClassId}
                             onChange={(e) => setSelectedClassId(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white"
+                            className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white dark:bg-slate-700 dark:text-slate-100"
                         >
                             {CLASSES_DATA.map(cls => (
                                 <option key={cls.id} value={cls.id}>{cls.name}</option>
@@ -92,12 +91,12 @@ const Grades: React.FC = () => {
                         </select>
                     </div>
                     <div>
-                        <label htmlFor="subject-select" className="block text-sm font-medium text-gray-700 mb-1">Disciplina</label>
+                        <label htmlFor="subject-select" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Disciplina</label>
                         <select
                             id="subject-select"
                             value={selectedSubjectId}
                             onChange={(e) => setSelectedSubjectId(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white"
+                            className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white dark:bg-slate-700 dark:text-slate-100"
                             disabled={subjectsForClass.length === 0}
                         >
                             {subjectsForClass.length > 0 ? (
@@ -114,10 +113,10 @@ const Grades: React.FC = () => {
 
             <Card>
                 <div className="overflow-x-auto">
-                    <table className="min-w-full w-full text-sm text-left text-gray-500">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50">
+                    <table className="min-w-full w-full text-sm text-left text-slate-500 dark:text-slate-400">
+                        <thead className="text-xs text-slate-600 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-700/50">
                             <tr>
-                                <th scope="col" className="px-6 py-3 sticky left-0 bg-gray-50 z-10">Nome do Aluno</th>
+                                <th scope="col" className="px-6 py-3 sticky left-0 bg-slate-50 dark:bg-slate-700/50 z-10">Nome do Aluno</th>
                                 <th scope="col" className="px-3 py-3 text-center">Nota 1</th>
                                 <th scope="col" className="px-3 py-3 text-center">Nota 2</th>
                                 <th scope="col" className="px-3 py-3 text-center">Exame Final</th>
@@ -131,8 +130,8 @@ const Grades: React.FC = () => {
                                 const currentGrades = selectedSubjectId ? studentGrades?.gradesBySubject[parseInt(selectedSubjectId)] : undefined;
 
                                 return (
-                                    <tr key={student.id} className="bg-white border-b hover:bg-gray-50">
-                                        <td className="px-6 py-2 font-medium text-gray-900 sticky left-0 bg-white z-10">{student.name}</td>
+                                    <tr key={student.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                        <td className="px-6 py-2 font-medium text-gray-900 dark:text-slate-100 sticky left-0 bg-white dark:bg-slate-800 z-10">{student.name}</td>
                                         {(['nota1', 'nota2', 'finalExam'] as (keyof GradeRecord)[]).map(field => (
                                             <td key={field} className="px-2 py-1">
                                                 <input
@@ -143,7 +142,7 @@ const Grades: React.FC = () => {
                                                     placeholder="-"
                                                     value={currentGrades?.[field] ?? ''}
                                                     onChange={(e) => handleGradeChange(student.id, field, e.target.value)}
-                                                    className="w-24 text-center p-1 border border-gray-300 rounded-md focus:ring-reviva-green-light focus:border-reviva-green-light"
+                                                    className="w-24 text-center p-1 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-reviva-green-light focus:border-reviva-green-light bg-white dark:bg-slate-700 dark:text-slate-100"
                                                     disabled={!selectedSubjectId}
                                                 />
                                             </td>
@@ -162,7 +161,7 @@ const Grades: React.FC = () => {
                         </tbody>
                     </table>
                      {studentsInClass.length > 0 && !selectedSubjectId && (
-                        <div className="p-8 text-center text-gray-500">
+                        <div className="p-8 text-center text-slate-500 dark:text-slate-400">
                             Por favor, selecione uma disciplina para começar a lançar as notas.
                         </div>
                     )}
