@@ -1,11 +1,12 @@
 
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import PageHeader from '../components/PageHeader';
+import PageHeader from '../components/Header';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { Select } from '../components/ui/Select';
 
 const TeacherForm: React.FC = () => {
     const { id } = useParams();
@@ -22,19 +23,10 @@ const TeacherForm: React.FC = () => {
 
     const FormSection: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
         <div className="mb-8">
-            <h3 className="text-xl font-semibold text-gray-800 border-b-2 border-reviva-green pb-2 mb-4">{title}</h3>
+            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 border-b-2 border-reviva-green pb-2 mb-4">{title}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {children}
             </div>
-        </div>
-    );
-
-    const SelectField: React.FC<{ label: string; id: string; children: React.ReactNode; required?: boolean }> = ({ label, id, children, required }) => (
-        <div className="flex flex-col">
-            <label htmlFor={id} className="mb-1 text-sm font-medium text-gray-700">{label}{required && <span className="text-red-500">*</span>}</label>
-            <select id={id} name={id} required={required} className="p-2 border border-gray-300 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white">
-                {children}
-            </select>
         </div>
     );
     
@@ -57,10 +49,10 @@ const TeacherForm: React.FC = () => {
 
                     <FormSection title="Informações Profissionais">
                         <Input label="Qualificações" id="qualifications" required />
-                        <SelectField label="Status" id="status">
+                        <Select label="Status" id="status">
                             <option>Ativo</option>
                             <option>Inativo</option>
-                        </SelectField>
+                        </Select>
                     </FormSection>
                     
                     <div className="flex justify-end mt-8 gap-4">

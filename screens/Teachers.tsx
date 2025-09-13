@@ -1,7 +1,6 @@
-
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageHeader from '../components/PageHeader';
+import PageHeader from '../components/Header';
 import DataTable from '../components/DataTable';
 import { TEACHERS_DATA } from '../constants';
 import { Teacher } from '../types';
@@ -46,6 +45,8 @@ const Teachers: React.FC = () => {
       <PageHeader title="Gestão de Professores" subtitle="Lista completa do corpo docente da escola">
         <div className="flex flex-col sm:flex-row items-center gap-4">
             <Input
+                // FIX: Added id prop to satisfy InputProps interface.
+                id="search-teachers"
                 type="text"
                 placeholder="Pesquisar por nome..."
                 value={searchTerm}

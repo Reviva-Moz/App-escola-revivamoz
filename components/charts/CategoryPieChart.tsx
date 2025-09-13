@@ -13,8 +13,8 @@ const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-2 border border-gray-200 rounded shadow-sm">
-          <p className="font-semibold">{`${data.name}: ${formatCurrency(data.amount)}`}</p>
+        <div className="bg-white dark:bg-slate-700 p-2 border border-slate-200 dark:border-slate-600 rounded shadow-sm">
+          <p className="font-semibold text-slate-800 dark:text-slate-200">{`${data.name}: ${formatCurrency(data.amount)}`}</p>
         </div>
       );
     }
@@ -24,9 +24,9 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 const CategoryPieChart: React.FC<CategoryPieChartProps> = ({ data, title }) => {
   return (
-    <div className="bg-white p-6 rounded-xl shadow-md h-full flex flex-col">
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">{title}</h3>
-        <div className="flex-grow">
+    <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md dark:shadow-none dark:border dark:border-slate-700 h-full flex flex-col">
+        <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">{title}</h3>
+        <div className="flex-grow text-sm text-slate-600 dark:text-slate-400">
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                 <Pie

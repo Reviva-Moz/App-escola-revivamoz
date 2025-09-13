@@ -30,8 +30,15 @@ export interface Class {
     id: number;
     name: string;
     year: number;
+    teacherId: number | null;
     teacherName: string;
     studentCount: number;
+}
+
+export interface ClassCurriculum {
+  classId: number;
+  subjectId: number;
+  teacherId: number;
 }
 
 export interface FinancialCategory {
@@ -69,4 +76,13 @@ export interface StudentGrades {
   gradesBySubject: {
     [subjectId: number]: GradeRecord;
   };
+}
+
+export interface CalendarEvent {
+  id: number;
+  title: string;
+  date: string; // YYYY-MM-DD
+  type: 'Feriado' | 'Evento' | 'Prova' | 'Prazo';
+  description?: string;
+  createdAt: string; // ISO string date
 }

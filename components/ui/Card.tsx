@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -8,7 +7,7 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 export const Card: React.FC<CardProps> = ({ children, className, ...props }) => {
   return (
     <div
-      className={`bg-white rounded-xl shadow-md overflow-hidden ${className}`}
+      className={`bg-white dark:bg-slate-800 rounded-xl shadow-md dark:shadow-none dark:border dark:border-slate-700 overflow-hidden ${className}`}
       {...props}
     >
       {children}

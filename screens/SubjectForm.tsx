@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import PageHeader from '../components/PageHeader';
+import PageHeader from '../components/Header';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';

@@ -1,7 +1,7 @@
 
-import React, { useState, useMemo } from 'react';
-import PageHeader from '../components/PageHeader';
-import { CLASSES_DATA, SUBJECTS_DATA, STUDENTS_DATA, GRADES_DATA } from '../constants';
+import React, { useState, useMemo, useEffect } from 'react';
+import PageHeader from '../components/Header';
+import { CLASSES_DATA, SUBJECTS_DATA, STUDENTS_DATA, GRADES_DATA, CLASS_CURRICULUM_DATA } from '../constants';
 import { StudentGrades, GradeRecord } from '../types';
 import { DocumentDuplicateIcon } from '@heroicons/react/24/outline';
 import { Card } from '../components/ui/Card';
@@ -9,13 +9,33 @@ import { Button } from '../components/ui/Button';
 
 const Grades: React.FC = () => {
     const [selectedClassId, setSelectedClassId] = useState<string>(CLASSES_DATA[0]?.id.toString() || '');
-    const [selectedSubjectId, setSelectedSubjectId] = useState<string>(SUBJECTS_DATA[0]?.id.toString() || '');
+    const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
     const [gradesData, setGradesData] = useState<StudentGrades[]>(GRADES_DATA);
 
     const studentsInClass = useMemo(() => {
         if (!selectedClassId) return [];
         return STUDENTS_DATA.filter(student => student.classId === parseInt(selectedClassId));
     }, [selectedClassId]);
+
+    const subjectsForClass = useMemo(() => {
+        if (!selectedClassId) return [];
+        const curriculumForClass = CLASS_CURRICULUM_DATA.filter(c => c.classId === parseInt(selectedClassId));
+        return SUBJECTS_DATA.filter(subject =>
+            curriculumForClass.some(c => c.subjectId === subject.id)
+        );
+    }, [selectedClassId]);
+
+    useEffect(() => {
+        // Auto-select first subject when class changes or when subjects load for the first time
+        if (subjectsForClass.length > 0) {
+            // Check if the current selection is valid, if not, update it
+            if (!subjectsForClass.some(s => s.id.toString() === selectedSubjectId)) {
+                setSelectedSubjectId(subjectsForClass[0].id.toString());
+            }
+        } else {
+            setSelectedSubjectId('');
+        }
+    }, [selectedClassId, subjectsForClass, selectedSubjectId]);
 
     const calculateAverage = (gradeRecord: GradeRecord | undefined): string => {
         if (!gradeRecord) return 'N/A';
@@ -30,6 +50,7 @@ const Grades: React.FC = () => {
     };
 
     const handleGradeChange = (studentId: number, field: keyof GradeRecord, value: string) => {
+        if (!selectedSubjectId) return;
         const numericValue = value === '' ? '' : Math.max(0, Math.min(20, parseFloat(value) || 0));
 
         setGradesData(prevData => {
@@ -77,10 +98,15 @@ const Grades: React.FC = () => {
                             value={selectedSubjectId}
                             onChange={(e) => setSelectedSubjectId(e.target.value)}
                             className="w-full p-2 border border-gray-300 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white"
+                            disabled={subjectsForClass.length === 0}
                         >
-                            {SUBJECTS_DATA.map(sub => (
-                                <option key={sub.id} value={sub.id}>{sub.name}</option>
-                            ))}
+                            {subjectsForClass.length > 0 ? (
+                                subjectsForClass.map(sub => (
+                                    <option key={sub.id} value={sub.id}>{sub.name}</option>
+                                ))
+                            ) : (
+                                <option>Nenhuma disciplina para esta turma</option>
+                            )}
                         </select>
                     </div>
                 </div>
@@ -102,7 +128,7 @@ const Grades: React.FC = () => {
                         <tbody>
                             {studentsInClass.map(student => {
                                 const studentGrades = gradesData.find(sg => sg.studentId === student.id);
-                                const currentGrades = studentGrades?.gradesBySubject[parseInt(selectedSubjectId)];
+                                const currentGrades = selectedSubjectId ? studentGrades?.gradesBySubject[parseInt(selectedSubjectId)] : undefined;
 
                                 return (
                                     <tr key={student.id} className="bg-white border-b hover:bg-gray-50">
@@ -118,6 +144,7 @@ const Grades: React.FC = () => {
                                                     value={currentGrades?.[field] ?? ''}
                                                     onChange={(e) => handleGradeChange(student.id, field, e.target.value)}
                                                     className="w-24 text-center p-1 border border-gray-300 rounded-md focus:ring-reviva-green-light focus:border-reviva-green-light"
+                                                    disabled={!selectedSubjectId}
                                                 />
                                             </td>
                                         ))}
@@ -134,6 +161,11 @@ const Grades: React.FC = () => {
                             })}
                         </tbody>
                     </table>
+                     {studentsInClass.length > 0 && !selectedSubjectId && (
+                        <div className="p-8 text-center text-gray-500">
+                            Por favor, selecione uma disciplina para começar a lançar as notas.
+                        </div>
+                    )}
                 </div>
             </Card>
         </>

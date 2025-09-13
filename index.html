@@ -10,7 +10,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
+      // On page load or when changing themes, best to add inline in `head` to avoid FOUC
+      if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+      
       tailwind.config = {
+        darkMode: 'class',
         theme: {
           extend: {
             colors: {
@@ -18,6 +26,18 @@
               'reviva-green-dark': '#21421d',
               'reviva-green-light': '#3c7835',
               'reviva-dark': '#1f2937',
+              slate: {
+                50: '#f8fafc',
+                100: '#f1f5f9',
+                200: '#e2e8f0',
+                300: '#cbd5e1',
+                400: '#94a3b8',
+                500: '#64748b',
+                600: '#475569',
+                700: '#334155',
+                800: '#1e293b',
+                900: '#0f172a',
+              },
             },
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
@@ -34,12 +54,13 @@
     "react": "https://esm.sh/react@^19.1.1",
     "recharts": "https://esm.sh/recharts@^3.1.0",
     "react-router-dom": "https://esm.sh/react-router-dom@^7.7.1",
-    "@heroicons/react/": "https://esm.sh/@heroicons/react@^2.2.0/"
+    "@heroicons/react/": "https://esm.sh/@heroicons/react@^2.2.0/",
+    "@supabase/supabase-js": "https://aistudiocdn.com/@supabase/supabase-js@^2.57.4"
   }
 }
 </script>
 </head>
-<body class="bg-gray-100 font-sans antialiased">
+<body class="bg-slate-100 dark:bg-slate-900 font-sans antialiased">
     <div id="root"></div>
 </body>
 </html>

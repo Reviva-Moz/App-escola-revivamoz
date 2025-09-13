@@ -13,10 +13,13 @@ import Teachers from './screens/Teachers';
 import TeacherForm from './screens/TeacherForm';
 import Classes from './screens/Classes';
 import ClassForm from './screens/ClassForm';
+import ClassDetails from './screens/ClassDetails';
 import Subjects from './screens/Subjects';
 import SubjectForm from './screens/SubjectForm';
 import Attendance from './screens/Attendance';
 import Grades from './screens/Grades';
+import Calendar from './screens/Calendar';
+import Reports from './screens/Reports';
 
 const App: React.FC = () => {
   return (
@@ -43,6 +46,7 @@ const App: React.FC = () => {
                 <Route path="/turmas" element={<Classes />} />
                 <Route path="/turmas/novo" element={<ClassForm />} />
                 <Route path="/turmas/:id/editar" element={<ClassForm />} />
+                <Route path="/turmas/:id/detalhes" element={<ClassDetails />} />
                 <Route path="/disciplinas" element={<Subjects />} />
                 <Route path="/disciplinas/novo" element={<SubjectForm />} />
                 <Route path="/disciplinas/:id/editar" element={<SubjectForm />} />
@@ -51,8 +55,8 @@ const App: React.FC = () => {
                 <Route path="/assiduidade" element={<Attendance />} />
                 <Route path="/cadernetas" element={<Grades />} />
 
-                <Route path="/periodos" element={<ComingSoon title="Calendário e Horários" />} />
-                <Route path="/relatorios" element={<ComingSoon title="Relatórios Avançados" />} />
+                <Route path="/calendario" element={<Calendar />} />
+                <Route path="/relatorios" element={<Reports />} />
               </Routes>
             </Layout>
           </ProtectedRoute>

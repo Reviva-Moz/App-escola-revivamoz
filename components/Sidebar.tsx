@@ -78,8 +78,8 @@ const Sidebar: React.FC = () => {
           <NavItem to="/cadernetas" icon={<BookIcon />} label="Lançamento de Notas" onClick={closeSidebar} />
 
           <p className="px-3 pt-4 pb-1 text-xs text-gray-400 font-semibold uppercase">Administrativo</p>
-          <NavItem to="/periodos" icon={<CalendarIcon />} label="Calendário Escolar" disabled />
-          <NavItem to="/relatorios" icon={<ReportIcon />} label="Relatórios" disabled />
+          <NavItem to="/calendario" icon={<CalendarIcon />} label="Calendário Escolar" onClick={closeSidebar} />
+          <NavItem to="/relatorios" icon={<ReportIcon />} label="Relatórios" onClick={closeSidebar} />
         </nav>
       </aside>
        {/* Overlay for mobile */}

@@ -1,7 +1,6 @@
-
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageHeader from '../components/PageHeader';
+import PageHeader from '../components/Header';
 import DataTable from '../components/DataTable';
 import { SUBJECTS_DATA } from '../constants';
 import { Subject } from '../types';
@@ -43,6 +42,8 @@ const Subjects: React.FC = () => {
       <PageHeader title="Gestão de Disciplinas" subtitle="Organize todas as disciplinas oferecidas pela escola">
          <div className="flex flex-col sm:flex-row items-center gap-4">
             <Input
+                // FIX: Added id prop to satisfy InputProps interface.
+                id="search-subjects"
                 type="text"
                 placeholder="Pesquisar por disciplina..."
                 value={searchTerm}

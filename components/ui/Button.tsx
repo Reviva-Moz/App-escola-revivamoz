@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -18,9 +17,9 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variants = {
     primary: 'bg-reviva-green text-white hover:bg-reviva-green-dark',
-    secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300',
-    link: 'text-blue-600 underline-offset-4 hover:underline',
-    ghost: 'hover:bg-gray-100 hover:text-gray-900',
+    secondary: 'bg-slate-200 text-slate-800 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600',
+    link: 'text-blue-600 dark:text-blue-400 underline-offset-4 hover:underline',
+    ghost: 'hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100',
   };
 
   const sizes = {

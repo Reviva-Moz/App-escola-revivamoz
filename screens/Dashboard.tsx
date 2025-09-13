@@ -1,14 +1,30 @@
 
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import PageHeader from '../components/PageHeader';
+import PageHeader from '../components/Header';
 import StatCard from '../components/StatCard';
 import { UsersIcon, CheckCircleIcon, CurrencyDollarIcon, ArrowTrendingUpIcon, ArrowTrendingDownIcon, ScaleIcon } from '@heroicons/react/24/outline';
 import { TOTAL_STUDENTS, TOTAL_TEACHERS, APPROVAL_RATE, FINANCIAL_SUMMARY, CLASS_DISTRIBUTION_DATA } from '../constants';
 import { formatCurrency } from '../utils/formatters';
 import { Card } from '../components/ui/Card';
+import { useTheme } from '../context/ThemeContext';
 
 const Dashboard: React.FC = () => {
+  const { theme } = useTheme();
+  const tickColor = theme === 'dark' ? '#94a3b8' : '#475569';
+
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white dark:bg-slate-700 p-2 border border-slate-200 dark:border-slate-600 rounded shadow-sm">
+          <p className="label font-semibold text-slate-800 dark:text-slate-200">{`${label}`}</p>
+          <p className="intro text-reviva-green">{`Alunos : ${payload[0].value}`}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <>
       <PageHeader title="Dashboard Principal" subtitle="Visão geral e estatísticas da Escola Reviva" />
@@ -70,18 +86,18 @@ const Dashboard: React.FC = () => {
       {/* Class Distribution Chart */}
       <Card>
         <div className="p-4 sm:p-6">
-            <h3 className="text-lg font-semibold text-gray-700 mb-4">Distribuição de Alunos por Classe</h3>
+            <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">Distribuição de Alunos por Classe</h3>
             <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
                 <BarChart
                 data={CLASS_DISTRIBUTION_DATA}
                 margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
                 >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tickFormatter={(value) => `${value}`} />
-                <Tooltip formatter={(value: number) => `${value} alunos`} />
-                <Legend />
+                <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
+                <XAxis dataKey="name" tick={{ fontSize: 12, fill: tickColor }} />
+                <YAxis tickFormatter={(value) => `${value}`} tick={{ fill: tickColor }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(128, 128, 128, 0.1)' }} />
+                <Legend wrapperStyle={{ color: tickColor }} />
                 <Bar dataKey="Alunos" fill="#2d5a27" />
                 </BarChart>
             </ResponsiveContainer>

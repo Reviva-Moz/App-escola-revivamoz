@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import PageHeader from '../components/PageHeader';
-import { CLASSES_DATA, STUDENTS_DATA } from '../constants';
+import PageHeader from '../components/Header';
+import { CLASSES_DATA, STUDENTS_DATA, SUBJECTS_DATA, CLASS_CURRICULUM_DATA } from '../constants';
 import { Student } from '../types';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -11,6 +11,7 @@ type AttendanceStatus = 'Presente' | 'Ausente' | 'Justificado';
 const Attendance: React.FC = () => {
   const today = new Date().toISOString().split('T')[0];
   const [selectedClassId, setSelectedClassId] = useState<string>(CLASSES_DATA[0]?.id.toString() || '');
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [attendance, setAttendance] = useState<{ [studentId: number]: AttendanceStatus }>({});
 
@@ -19,14 +20,33 @@ const Attendance: React.FC = () => {
     return STUDENTS_DATA.filter(student => student.classId === parseInt(selectedClassId));
   }, [selectedClassId]);
 
+  const subjectsForClass = useMemo(() => {
+    if (!selectedClassId) return [];
+    const curriculumForClass = CLASS_CURRICULUM_DATA.filter(c => c.classId === parseInt(selectedClassId));
+    return SUBJECTS_DATA.filter(subject =>
+      curriculumForClass.some(c => c.subjectId === subject.id)
+    );
+  }, [selectedClassId]);
+
   useEffect(() => {
-    // Reset and initialize attendance when class or date changes
+    // Auto-select first subject when class changes
+    if (subjectsForClass.length > 0) {
+      if (!subjectsForClass.some(s => s.id.toString() === selectedSubjectId)) {
+        setSelectedSubjectId(subjectsForClass[0].id.toString());
+      }
+    } else {
+      setSelectedSubjectId('');
+    }
+  }, [selectedClassId, subjectsForClass, selectedSubjectId]);
+
+  useEffect(() => {
+    // Reset and initialize attendance when class, subject or date changes
     const initialAttendance: { [studentId: number]: AttendanceStatus } = {};
     studentsInClass.forEach(student => {
       initialAttendance[student.id] = 'Presente';
     });
     setAttendance(initialAttendance);
-  }, [studentsInClass, selectedDate]);
+  }, [studentsInClass, selectedDate, selectedSubjectId]);
 
   const handleStatusChange = (studentId: number, status: AttendanceStatus) => {
     setAttendance(prev => ({
@@ -36,8 +56,11 @@ const Attendance: React.FC = () => {
   };
   
   const handleSave = () => {
-    // In a real app, this would send data to an API
-    console.log('Saving attendance for', selectedDate, 'in class', selectedClassId, ':', attendance);
+    if (!selectedSubjectId) {
+        alert('Por favor, selecione uma disciplina.');
+        return;
+    }
+    console.log('Saving attendance for', selectedDate, 'in class', selectedClassId, 'subject', selectedSubjectId, ':', attendance);
     alert('Presença salva com sucesso!');
   }
 
@@ -46,7 +69,7 @@ const Attendance: React.FC = () => {
       <PageHeader title="Registro de Assiduidade" subtitle="Marque a presença dos alunos para a data e turma selecionada" />
 
       <Card className="mb-6">
-        <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div className="p-4 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <div>
             <label htmlFor="class-select" className="block text-sm font-medium text-gray-700 mb-1">Turma</label>
             <select
@@ -61,6 +84,24 @@ const Attendance: React.FC = () => {
             </select>
           </div>
           <div>
+            <label htmlFor="subject-select" className="block text-sm font-medium text-gray-700 mb-1">Disciplina</label>
+            <select
+              id="subject-select"
+              value={selectedSubjectId}
+              onChange={(e) => setSelectedSubjectId(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white"
+              disabled={subjectsForClass.length === 0}
+            >
+              {subjectsForClass.length > 0 ? (
+                subjectsForClass.map(sub => (
+                  <option key={sub.id} value={sub.id}>{sub.name}</option>
+                ))
+              ) : (
+                <option>Nenhuma disciplina para esta turma</option>
+              )}
+            </select>
+          </div>
+          <div>
             <label htmlFor="date-select" className="block text-sm font-medium text-gray-700 mb-1">Data</label>
             <input
               type="date"
@@ -72,7 +113,7 @@ const Attendance: React.FC = () => {
           </div>
           <Button
             onClick={handleSave}
-            className="w-full md:w-auto"
+            className="w-full"
           >
             Salvar Presença
           </Button>
