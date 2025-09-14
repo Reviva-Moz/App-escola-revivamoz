@@ -91,7 +91,7 @@ const Dashboard: React.FC = () => {
             <ResponsiveContainer>
                 <BarChart
                 data={CLASS_DISTRIBUTION_DATA}
-                margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
+                margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
                 >
                 <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
                 <XAxis dataKey="name" tick={{ fontSize: 12, fill: tickColor }} />

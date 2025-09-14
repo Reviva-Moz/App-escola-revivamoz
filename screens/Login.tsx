@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { REVIVA_LOGO_BASE64 } from '../constants';
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
@@ -25,13 +24,15 @@ const Login: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-                <img src={REVIVA_LOGO_BASE64} alt="Escola Reviva Logo" className="mx-auto w-64 h-auto" />
-                <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
-                    Bem-vindo
-                </h2>
-                <p className="mt-2 text-sm text-gray-600 dark:text-slate-400">
-                    Acesse o sistema de gestão escolar
+                <h1 className="text-4xl font-extrabold text-reviva-green dark:text-reviva-green-light">
+                    Escola Reviva
+                </h1>
+                <p className="text-md font-medium text-slate-900 dark:text-white mt-2">
+                    SGE - Sistema de Gestão Escolar
                 </p>
+                <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
+                    Acesse o sistema
+                </h2>
             </div>
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">

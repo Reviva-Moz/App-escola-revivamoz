@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, FC } from 'react';
 import { CalendarEvent } from '../types';
 import { CALENDAR_EVENTS_DATA } from '../constants';
@@ -214,7 +215,7 @@ const Calendar: React.FC = () => {
                              const dayEvents = day ? events.filter(e => e.date === day.toISOString().split('T')[0]) : [];
 
                             return (
-                                <div key={index} className="h-28 border-r border-b border-slate-200 dark:border-slate-700 p-1 flex flex-col overflow-hidden">
+                                <div key={index} className="h-24 sm:h-28 border-r border-b border-slate-200 dark:border-slate-700 p-1 flex flex-col overflow-hidden">
                                      {day ? (
                                         <>
                                             <span className={`text-sm font-medium ${isToday ? 'bg-reviva-green text-white rounded-full h-6 w-6 flex items-center justify-center' : 'text-slate-800 dark:text-slate-200'}`}>

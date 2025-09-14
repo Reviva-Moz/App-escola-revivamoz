@@ -58,6 +58,7 @@ export interface Enrollment {
 
 export interface Tuition {
     id: number;
+    studentId: number; // Reference student by ID for better data relations
     studentName: string;
     month: string;
     dueDate: string;
@@ -85,4 +86,33 @@ export interface CalendarEvent {
   type: 'Feriado' | 'Evento' | 'Prova' | 'Prazo';
   description?: string;
   createdAt: string; // ISO string date
+  classId?: number;
+  subjectId?: number;
+}
+
+export interface Category {
+  id: number;
+  name: string;
+  type: 'Receita' | 'Despesa';
+}
+
+export interface Scholarship {
+  id: number;
+  name: string;
+  type: 'Percentagem' | 'Valor Fixo';
+  value: number; // The percentage or the fixed amount
+}
+
+export interface StudentScholarship {
+  studentId: number;
+  scholarshipId: number;
+}
+
+export interface Transaction {
+  id: number;
+  date: string; // YYYY-MM-DD
+  description: string;
+  type: 'Receita' | 'Despesa';
+  categoryId: number;
+  amount: number;
 }

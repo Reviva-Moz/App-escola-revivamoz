@@ -1,6 +1,4 @@
-import { Student, Teacher, Subject, Class, FinancialCategory, Enrollment, Tuition, StudentGrades, CalendarEvent, ClassCurriculum } from './types';
-
-export const REVIVA_LOGO_BASE64 = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MDAiIGhlaWdodD0iMTAwIiB2aWV3Qm94PSIwIDAgNDAwIDEwMCI+PHN0eWxlPi50ZXh0IHsgZm9udC1mYW1pbHk6ICdJbnRlcicsIHNhbnMtc2VyaWY7IGZvbnQtc2l6ZTogNDhweDsgZm9udC13ZWlnaHQ6IDcwMDsgfTwvc3R5bGU+PHRleHQgeD0iMTAiIHk9IjcwIiBjbGFzcz0idGV4dCIgZmlsbD0iIzJkNWEyNyI+RXNjb2xhPC90ZXh0Pjx0ZXh0IHg9IjE4MCIgeT0iNzAiIGNsYXNzPSJ0ZXh0IiBmaWxsPSIjNDc1NzkiPlJldml2YTwvdGV4dD48L3N2Zz4=';
+import { Student, Teacher, Subject, Class, FinancialCategory, Enrollment, Tuition, StudentGrades, CalendarEvent, ClassCurriculum, Category, Scholarship, StudentScholarship, Transaction } from './types';
 
 export const TOTAL_STUDENTS = 342;
 export const TOTAL_TEACHERS = 28;
@@ -29,6 +27,43 @@ export const EXPENSE_CATEGORIES: FinancialCategory[] = [
   { name: 'Utilities', amount: 4700, color: '#0EA5E9' },
   { name: 'Transporte', amount: 4200, color: '#14B8A6' },
   { name: 'Manutenção', amount: 2500, color: '#6B7280' },
+];
+
+export const CATEGORIES_DATA: Category[] = [
+  // Receitas
+  { id: 1, name: 'Mensalidades', type: 'Receita' },
+  { id: 2, name: 'Matrículas', type: 'Receita' },
+  { id: 3, name: 'Uniformes', type: 'Receita' },
+  { id: 4, name: 'Material Escolar', type: 'Receita' },
+  { id: 5, name: 'Eventos', type: 'Receita' },
+  { id: 6, name: 'Doações', type: 'Receita' },
+  // Despesas
+  { id: 101, name: 'Salários', type: 'Despesa' },
+  { id: 102, name: 'Material Didático', type: 'Despesa' },
+  { id: 103, name: 'Alimentação', type: 'Despesa' },
+  { id: 104, name: 'Utilities (Água, Luz, Internet)', type: 'Despesa' },
+  { id: 105, name: 'Transporte', type: 'Despesa' },
+  { id: 106, name: 'Manutenção e Reparos', type: 'Despesa' },
+];
+
+export const SCHOLARSHIPS_DATA: Scholarship[] = [
+  { id: 1, name: 'Bolsa de Mérito Académico', type: 'Percentagem', value: 25 }, // 25%
+  { id: 2, name: 'Apoio Social', type: 'Valor Fixo', value: 500 }, // 500 MZN
+  { id: 3, name: 'Bolsa de Desporto', type: 'Percentagem', value: 15 }, // 15%
+];
+
+export const STUDENT_SCHOLARSHIPS_DATA: StudentScholarship[] = [
+  { studentId: 2, scholarshipId: 1 }, // Bruno Costa has a 25% scholarship
+  { studentId: 6, scholarshipId: 2 }, // Fábio Gomes has a fixed 500 MZN discount
+];
+
+export const TRANSACTIONS_DATA: Transaction[] = [
+  { id: 1, date: '2024-07-01', description: 'Mensalidade - Ana Silva', type: 'Receita', categoryId: 1, amount: 1500 },
+  { id: 2, date: '2024-07-02', description: 'Compra de material de escritório', type: 'Despesa', categoryId: 102, amount: 250 },
+  { id: 3, date: '2024-07-05', description: 'Pagamento de salário - Carlos Neto', type: 'Despesa', categoryId: 101, amount: 20000 },
+  { id: 4, date: '2024-07-10', description: 'Venda de Uniformes', type: 'Receita', categoryId: 3, amount: 800 },
+  { id: 5, date: '2024-07-12', description: 'Pagamento conta de luz', type: 'Despesa', categoryId: 104, amount: 1200 },
+  { id: 6, date: '2024-07-15', description: 'Matrícula - Novo Aluno', type: 'Receita', categoryId: 2, amount: 5000 },
 ];
 
 export const STUDENTS_DATA: Student[] = [
@@ -116,11 +151,12 @@ export const ENROLLMENTS_DATA: Enrollment[] = [
 ];
 
 export const TUITION_DATA: Tuition[] = [
-    { id: 1, studentName: 'Ana Silva', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pago' },
-    { id: 2, studentName: 'Bruno Costa', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pago' },
-    { id: 3, studentName: 'Carla Dias', month: 'Junho', dueDate: '2024-06-05', amount: 1500, status: 'Atrasado' },
-    { id: 4, studentName: 'David Martins', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pendente' },
-    { id: 5, studentName: 'Elisa Ferreira', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pago' },
+    { id: 1, studentId: 1, studentName: 'Ana Silva', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pago' },
+    { id: 2, studentId: 2, studentName: 'Bruno Costa', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pago' },
+    { id: 3, studentId: 3, studentName: 'Carla Dias', month: 'Junho', dueDate: '2024-06-05', amount: 1500, status: 'Atrasado' },
+    { id: 4, studentId: 4, studentName: 'David Martins', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pendente' },
+    { id: 5, studentId: 5, studentName: 'Elisa Ferreira', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pago' },
+    { id: 6, studentId: 6, studentName: 'Fábio Gomes', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pendente' },
 ];
 
 export const CLASS_DISTRIBUTION_DATA = [
@@ -157,6 +193,8 @@ export const CALENDAR_EVENTS_DATA: CalendarEvent[] = [
         date: "2024-05-20",
         type: 'Prova',
         createdAt: "2024-05-01T14:30:00.000Z",
+        classId: 2,
+        subjectId: 1
     },
     {
         id: 4,

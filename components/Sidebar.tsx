@@ -76,6 +76,7 @@ const Sidebar: React.FC = () => {
           <p className="px-3 pt-4 pb-1 text-xs text-gray-400 font-semibold uppercase">Operações Diárias</p>
           <NavItem to="/assiduidade" icon={<CalendarIcon />} label="Assiduidade" onClick={closeSidebar} />
           <NavItem to="/cadernetas" icon={<BookIcon />} label="Lançamento de Notas" onClick={closeSidebar} />
+          <NavItem to="/provas" icon={<CalendarIcon />} label="Calendário de Provas" onClick={closeSidebar} />
 
           <p className="px-3 pt-4 pb-1 text-xs text-gray-400 font-semibold uppercase">Administrativo</p>
           <NavItem to="/calendario" icon={<CalendarIcon />} label="Calendário Escolar" onClick={closeSidebar} />

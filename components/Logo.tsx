@@ -1,10 +1,16 @@
 import React from 'react';
-import { REVIVA_LOGO_BASE64 } from '../constants';
 
-const Logo: React.FC = () => (
-  <div className="flex justify-center p-4">
-    <img src={REVIVA_LOGO_BASE64} alt="Escola Reviva Logo" className="w-48 h-auto" />
-  </div>
-);
+const Logo: React.FC = () => {
+  return (
+    <div className="flex flex-col items-center text-center p-4">
+      <h1 className="text-2xl font-bold text-reviva-green dark:text-reviva-green-light py-4">
+        Escola Reviva
+      </h1>
+      <p className="text-sm text-slate-600 dark:text-slate-300 -mt-2 tracking-tight">
+        SGE - Sistema de Gestão Escolar
+      </p>
+    </div>
+  );
+};
 
 export default Logo;

@@ -20,6 +20,7 @@ import Attendance from './screens/Attendance';
 import Grades from './screens/Grades';
 import Calendar from './screens/Calendar';
 import Reports from './screens/Reports';
+import ProvaCalendar from './screens/ProvaCalendar';
 
 const App: React.FC = () => {
   return (
@@ -54,6 +55,7 @@ const App: React.FC = () => {
                 {/* Rotas da Fase 3 */}
                 <Route path="/assiduidade" element={<Attendance />} />
                 <Route path="/cadernetas" element={<Grades />} />
+                <Route path="/provas" element={<ProvaCalendar />} />
 
                 <Route path="/calendario" element={<Calendar />} />
                 <Route path="/relatorios" element={<Reports />} />
