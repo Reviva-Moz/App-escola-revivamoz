@@ -1,12 +1,12 @@
 # Guia de Integração com Supabase - Escola Reviva
 
-Este guia detalha o processo passo a passo para conectar o sistema de gestão escolar a um banco de dados real utilizando o Supabase.
+Este guia detalha o processo passo a passo para configurar e conectar o sistema de gestão escolar a um banco de dados real utilizando o Supabase, incluindo a estrutura das tabelas, dados iniciais e políticas de segurança.
 
 ---
 
 ### **Passo 1: Criar o Projeto no Supabase**
 
-Se já seguiu estes passos e tem as suas chaves, pode avançar para o **Passo 2**.
+Se já tem um projeto e as suas chaves, pode avançar para o **Passo 2**.
 
 1.  **Crie uma Conta:** Se ainda não tiver uma, registe-se gratuitamente em [Supabase.com](https://supabase.com).
 
@@ -19,28 +19,28 @@ Se já seguiu estes passos e tem as suas chaves, pode avançar para o **Passo 2*
 
 ---
 
-### **Passo 2: Configurar o Banco de Dados**
+### **Passo 2: Configurar o Banco de Dados (Executar Scripts SQL)**
 
-Vamos agora criar a estrutura de tabelas e inserir os dados iniciais.
+Agora, vamos criar toda a estrutura do banco de dados e populá-la com os dados de exemplo. Para isso, criámos dois ficheiros SQL que deve executar na ordem correta.
 
 1.  **Abra o Editor SQL:**
-    *   No menu lateral esquerdo do seu projeto Supabase, clique no ícone de **Editor SQL** (um ícone de base de dados com "SQL").
+    *   No menu lateral esquerdo do seu projeto Supabase, clique no ícone de **SQL Editor**.
 
-2.  **Crie as Tabelas (Schema):**
+2.  **Execute o Script do Schema (Estrutura):**
     *   Clique em **"+ New query"**.
     *   Abra o ficheiro `sql/schema.sql` que está no explorador de ficheiros da aplicação.
-    *   Copie **TODO** o conteúdo do ficheiro `sql/schema.sql`.
+    *   Copie **TODO** o conteúdo do ficheiro.
     *   Cole o conteúdo no editor SQL do Supabase.
     *   Clique no botão verde **"RUN"** (ou use o atalho `Cmd+Enter` / `Ctrl+Enter`).
-    *   Após alguns segundos, deverá ver uma mensagem de "Success. No rows returned". As suas tabelas estão criadas!
+    *   Após alguns segundos, deverá ver uma mensagem de "Success". Isto criou todas as tabelas, relações e políticas de segurança.
 
-3.  **Popule as Tabelas com Dados Iniciais:**
+3.  **Execute o Script de Dados (População):**
     *   Crie uma nova query clicando novamente em **"+ New query"**.
     *   Abra o ficheiro `sql/data.sql`.
-    *   Copie **TODO** o conteúdo do ficheiro `sql/data.sql`.
+    *   Copie **TODO** o conteúdo do ficheiro.
     *   Cole o conteúdo no editor SQL.
     *   Clique em **"RUN"**.
-    *   Deverá ver outra mensagem de sucesso. Agora, o seu banco de dados contém todos os dados de exemplo que usávamos localmente.
+    *   Deverá ver outra mensagem de sucesso. Agora, o seu banco de dados contém todos os dados de exemplo que a aplicação utiliza.
 
 ---
 
@@ -48,42 +48,53 @@ Vamos agora criar a estrutura de tabelas e inserir os dados iniciais.
 
 Com o backend pronto, vamos configurar a nossa aplicação para se conectar a ele.
 
-1.  **Crie um Ficheiro de Ambiente:**
-    *   Na pasta raiz do seu projeto (ao lado do `index.html`), crie um novo ficheiro chamado `.env`.
-    *   **Importante:** Este ficheiro contém chaves secretas e **NUNCA** deve ser enviado para repositórios públicos (como o GitHub). Se estiver a usar Git, adicione `.env` ao seu ficheiro `.gitignore`.
+1.  **Encontre as Suas Chaves de API:**
+    *   No menu lateral, clique no ícone de **Project Settings** (engrenagem).
+    *   Vá para a secção **API**.
+    *   Aqui encontrará a sua **Project URL** e a chave **anon public** key. Precisaremos delas.
 
-2.  **Adicione as Suas Chaves ao Ficheiro `.env`:**
-    *   Abra o ficheiro `.env` e adicione o seguinte conteúdo. **Eu já preenchi com os dados que me forneceu**:
+2.  **Configure as Variáveis de Ambiente:**
+    *   Se ainda não o fez, crie um ficheiro chamado `.env` na raiz do seu projeto (ao lado do `index.html`).
+    *   Abra o ficheiro `.env` e adicione o seguinte conteúdo, substituindo os valores pelos do seu projeto:
 
     ```env
-    # Credenciais do Projeto Supabase - Escola Reviva
-    VITE_SUPABASE_URL="https://sygcsxklrqrsxuilavxc.supabase.co"
-    VITE_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN5Z2NzeGtscnFyc3h1aWxhdnhjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU5MjQ4MTYsImV4cCI6MjA3MTUwMDgxNn0.xxONtQfrC48jzvCWC76N6phDuXGIoDMg0Cj_To9EPGQ"
+    # Credenciais do Projeto Supabase
+    VITE_SUPABASE_URL="A_SUA_PROJECT_URL_AQUI"
+    VITE_SUPABASE_ANON_KEY="A_SUA_CHAVE_ANON_PUBLIC_AQUI"
     ```
+   * **Importante:** O ficheiro `.env` contém chaves secretas e **NUNCA** deve ser enviado para repositórios públicos (como o GitHub). Se estiver a usar Git, adicione `.env` ao seu ficheiro `.gitignore`.
 
 ---
 
 ### **Passo 4: Testar a Conexão**
 
-A aplicação já está configurada para ler estas variáveis de ambiente automaticamente através do ficheiro `utils/supabase.ts`.
+A aplicação está configurada para ler estas variáveis de ambiente automaticamente através do ficheiro `utils/supabase.ts`.
 
 1.  **Reinicie a Aplicação:** Se a aplicação estiver em execução, pare-a e inicie-a novamente para que ela possa carregar as novas variáveis de ambiente do ficheiro `.env`.
 
-2.  **Verifique a Página de Alunos:**
-    *   Navegue para a secção **"Gestão de Alunos"**.
-    *   A lista de alunos que vê agora deve ser exatamente a mesma de antes, mas desta vez, os dados estão a ser carregados diretamente do seu banco de dados Supabase!
-    *   Pode confirmar isto indo ao **"Table Editor"** no Supabase, selecionando a tabela `students` e alterando o nome de um aluno. Ao recarregar a página na aplicação, a alteração deverá ser refletida.
+2.  **Verifique a Aplicação:**
+    *   Faça login (admin@reviva.com / admin).
+    *   Navegue para a secção **"Gestão de Alunos"**. A lista de alunos deve ser a mesma de antes, mas agora os dados vêm diretamente do seu banco de dados Supabase.
+    *   **Teste:** Vá ao **"Table Editor"** no Supabase, selecione a tabela `students` e altere o nome de um aluno. Ao recarregar a página na aplicação, a alteração deverá ser refletida.
 
-### **Passo 5: Próximos Passos e Refatoração**
+---
 
-A integração está funcional! O próximo passo é aplicar o mesmo padrão de carregamento de dados e submissão de formulários às outras funcionalidades do sistema.
+### **Entender a Segurança (Row Level Security - RLS)**
 
-*   **Modelo de Refatoração:** Use os ficheiros `screens/Students.tsx` e `screens/StudentForm.tsx` como o exemplo perfeito de como refatorar os outros módulos (Professores, Turmas, Disciplinas, etc.).
+O script `schema.sql` já ativou a RLS para todas as tabelas. Isto significa que, por defeito, ninguém pode aceder aos dados.
 
-*   **JOINs em Queries:** Note que na query em `Students.tsx`, usamos `.select('*, classes(name)')` para buscar o nome da turma relacionada. Este é um padrão poderoso do Supabase para buscar dados de tabelas relacionadas numa única chamada.
+Criámos uma política base para cada tabela que permite que **qualquer utilizador autenticado (logado)** possa ler, criar, atualizar e apagar dados.
 
-*   **Autenticação:** O sistema de login atual é uma simulação. O próximo grande passo seria integrar o **Supabase Auth** para uma gestão de utilizadores real e segura.
+```sql
+-- Exemplo de política aplicada a todas as tabelas
+CREATE POLICY "Allow all access to authenticated users"
+ON public.students
+FOR ALL
+TO authenticated -- 'authenticated' é um role padrão do Supabase
+USING (true)
+WITH CHECK (true);
+```
 
-*   **Segurança (RLS):** Após configurar a autenticação, explore a **Row Level Security (RLS)** do Supabase para criar regras de acesso, garantindo que os utilizadores só possam ver e modificar os dados que lhes são permitidos.
+Isto é um ponto de partida seguro. Para uma aplicação mais complexa, poderia criar roles mais específicos (ex: 'professores', 'financeiro') e políticas que restrinjam o acesso. Por exemplo, um professor só poderia ver os alunos da sua própria turma.
 
-Parabéns! A sua aplicação está agora conectada a um backend escalável e robusto.
+Parabéns! A sua aplicação está agora conectada a um backend escalável e robusto. O próximo passo é refatorar os restantes módulos (Professores, Turmas, etc.) para usarem o Supabase, seguindo o exemplo de `screens/Students.tsx` e `screens/StudentForm.tsx`.
