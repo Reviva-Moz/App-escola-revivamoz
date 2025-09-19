@@ -21,6 +21,7 @@ import Grades from './screens/Grades';
 import Calendar from './screens/Calendar';
 import Reports from './screens/Reports';
 import ProvaCalendar from './screens/ProvaCalendar';
+import ActionPlan from './screens/ActionPlan';
 
 const App: React.FC = () => {
   return (
@@ -59,6 +60,7 @@ const App: React.FC = () => {
 
                 <Route path="/calendario" element={<Calendar />} />
                 <Route path="/relatorios" element={<Reports />} />
+                <Route path="/plano-de-acao" element={<ActionPlan />} />
               </Routes>
             </Layout>
           </ProtectedRoute>

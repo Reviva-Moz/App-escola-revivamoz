@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import Logo from './Logo';
-import { DashboardIcon, StudentsIcon, FinancialIcon, TeacherIcon, ClassIcon, BookIcon, CalendarIcon, ReportIcon } from './icons';
+import { DashboardIcon, StudentsIcon, FinancialIcon, TeacherIcon, ClassIcon, BookIcon, CalendarIcon, ReportIcon, ActionPlanIcon } from './icons';
 import { XMarkIcon, Bars3Icon } from '@heroicons/react/24/solid';
 
 interface NavItemProps {
@@ -81,6 +81,7 @@ const Sidebar: React.FC = () => {
           <p className="px-3 pt-4 pb-1 text-xs text-gray-400 font-semibold uppercase">Administrativo</p>
           <NavItem to="/calendario" icon={<CalendarIcon />} label="Calendário Escolar" onClick={closeSidebar} />
           <NavItem to="/relatorios" icon={<ReportIcon />} label="Relatórios" onClick={closeSidebar} />
+          <NavItem to="/plano-de-acao" icon={<ActionPlanIcon />} label="Plano de Ação" onClick={closeSidebar} />
         </nav>
       </aside>
        {/* Overlay for mobile */}
