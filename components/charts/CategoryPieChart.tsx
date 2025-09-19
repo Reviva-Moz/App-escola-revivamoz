@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { FinancialCategory } from '../../types';
@@ -23,6 +24,10 @@ const CustomTooltip = ({ active, payload }: any) => {
   };
 
 const CategoryPieChart: React.FC<CategoryPieChartProps> = ({ data, title }) => {
+  // FIX: Recharts can have typing issues with strictly typed interfaces like `FinancialCategory`.
+  // Mapping `data` to a new array of plain objects ensures compatibility with the Pie component.
+  const chartData = data.map(item => ({ ...item }));
+
   return (
     <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-md dark:shadow-none dark:border dark:border-slate-700 h-full flex flex-col">
         <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">{title}</h3>
@@ -30,7 +35,7 @@ const CategoryPieChart: React.FC<CategoryPieChartProps> = ({ data, title }) => {
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                 <Pie
-                    data={data}
+                    data={chartData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -40,7 +45,7 @@ const CategoryPieChart: React.FC<CategoryPieChartProps> = ({ data, title }) => {
                     dataKey="amount"
                     nameKey="name"
                 >
-                    {data.map((entry, index) => (
+                    {chartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                 </Pie>

@@ -29,6 +29,8 @@ import Communication from './screens/Communication';
 import Library from './screens/Library';
 import HR from './screens/HR';
 import StaffForm from './screens/StaffForm';
+import LessonPlan from './screens/LessonPlan';
+import Settings from './screens/Settings';
 
 const App: React.FC = () => {
   return (
@@ -61,6 +63,8 @@ const App: React.FC = () => {
                 <Route path="/disciplinas/novo" element={<SubjectForm />} />
                 <Route path="/disciplinas/:id/editar" element={<SubjectForm />} />
                 <Route path="/biblioteca" element={<Library />} />
+                <Route path="/plano-de-aula" element={<LessonPlan />} />
+
 
                 {/* Rotas da Fase 3 */}
                 <Route path="/assiduidade" element={<Attendance />} />
@@ -75,6 +79,7 @@ const App: React.FC = () => {
                 <Route path="/recursos-humanos/novo" element={<StaffForm />} />
                 <Route path="/recursos-humanos/:id/editar" element={<StaffForm />} />
                 <Route path="/plano-de-acao" element={<ActionPlan />} />
+                <Route path="/configuracoes" element={<Settings />} />
               </Routes>
             </Layout>
           </ProtectedRoute>

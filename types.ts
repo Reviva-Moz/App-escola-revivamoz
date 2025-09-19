@@ -1,5 +1,12 @@
 
 
+export type UserRole = 'ADMINISTRADOR' | 'DIRETORIA' | 'SECRETARIA' | 'RESPONSAVEL' | 'PROFESSOR' | 'ALUNO';
+
+export interface User {
+  email: string;
+  role: UserRole;
+}
+
 export interface Student {
   id: number;
   name: string;
@@ -9,6 +16,9 @@ export interface Student {
   guardian: string;
   phone: string;
   status: 'Ativo' | 'Inativo';
+  nuit?: string;
+  healthNotes?: string;
+  photoUrl?: string;
 }
 
 export interface Teacher {
@@ -28,6 +38,7 @@ export interface Staff {
     email: string;
     phone: string;
     status: 'Ativo' | 'Inativo';
+    nuit?: string;
 }
 
 export interface Subject {
@@ -126,6 +137,7 @@ export interface Transaction {
   type: 'Receita' | 'Despesa';
   categoryId: number;
   amount: number;
+  paymentMethod?: 'Dinheiro' | 'Transferência' | 'Digital';
 }
 
 export interface Announcement {

@@ -7,78 +7,89 @@ import { Badge } from '../components/ui/Badge';
 
 const phases = [
   {
-    title: 'Fase 1: Fundação & Gestão Principal',
+    title: 'MVP 1: Fundação & Gestão Principal',
     status: 'Concluído',
     variant: 'success' as const,
     features: [
       { name: 'Estrutura do Projeto e Layout Responsivo', done: true },
-      { name: 'Autenticação de Utilizadores', done: true },
+      { name: 'Autenticação por Perfis de Utilizador', done: true },
       { name: 'Dashboard Principal com Métricas Chave', done: true },
-      { name: 'Gestão Completa de Alunos (CRUD)', done: true },
-      { name: 'Dashboard Financeiro e Gráficos', done: true },
-    ]
-  },
-  {
-    title: 'Fase 2: Gestão Académica',
-    status: 'Concluído',
-    variant: 'success' as const,
-    features: [
-      { name: 'Gestão de Professores', done: true },
-      { name: 'Gestão de Turmas', done: true },
-      { name: 'Gestão de Disciplinas', done: true },
-      { name: 'Gestão de Plano Curricular por Turma', done: true },
-    ]
-  },
-  {
-    title: 'Fase 3: Operações Diárias',
-    status: 'Concluído',
-    variant: 'success' as const,
-    features: [
-      { name: 'Registro de Assiduidade por Disciplina', done: true },
-      { name: 'Lançamento de Notas (Pautas)', done: true },
-      { name: 'Calendário de Provas Interativo', done: true },
-      { name: 'Calendário Escolar Geral (Eventos e Feriados)', done: true },
-    ]
-  },
-  {
-    title: 'Fase 4: Administrativo & Melhorias',
-    status: 'Concluído',
-    variant: 'success' as const,
-    features: [
-      { name: 'Geração de Relatórios (Alunos, Professores, Financeiro)', done: true },
-      { name: 'Página de Plano de Ação do Projeto', done: true },
+      { name: 'Gestão Completa de Alunos, Professores e Pessoal (CRUD)', done: true },
+      { name: 'Gestão de Turmas, Disciplinas e Plano Curricular', done: true },
+      { name: 'Sistema Financeiro Completo (Transações, Mensalidades, Bolsas)', done: true },
+      { name: 'Operações Diárias (Assiduidade, Notas, Calendários)', done: true },
+      { name: 'Módulos Administrativos (Comunicação, Relatórios, Biblioteca)', done: true },
       { name: 'Integração com Base de Dados Real (Supabase)', done: true },
-      { name: 'Melhorias de Performance e Refatoração', done: true },
+      { name: 'Portal do Aluno e Encarregado', done: true },
     ]
   },
   {
-    title: 'Fase 5: Expansão e Ecossistema',
-    status: 'Concluído',
-    variant: 'success' as const,
-    features: [
-      { name: 'Pagamentos Online de Mensalidades (Integração M-Pesa/eMola)', done: true },
-      { name: 'Portal do Aluno e Encarregado (Consulta de Notas e Faltas)', done: true },
-      { name: 'Sistema de Comunicação (Avisos e Mensagens)', done: true },
-      { name: 'Gestão de Biblioteca', done: true },
-      { name: 'Módulo de Recursos Humanos Simplificado', done: true },
-    ]
-  },
-  {
-    title: 'Fase 6: Melhorias Contínuas & Integrações Futuras',
+    title: 'Fase 1.1: Aprimoramentos e Adaptação Local',
     status: 'Em Progresso',
     variant: 'warning' as const,
     features: [
-      { name: 'Aplicativo Móvel para Pais e Professores', done: false },
-      { name: 'Integração com Plataformas EAD (Moodle, Google Classroom)', done: false },
-      { name: 'Relatórios Académicos Avançados com IA', done: false },
-      { name: 'Gestão de Transporte Escolar', done: false },
+      { name: 'Adicionar campo NUIT nos cadastros de Alunos e Pessoal', done: true },
+      { name: 'Adicionar Ficha de Saúde Básica no cadastro de Alunos', done: true },
+      { name: 'Capturar foto do aluno via webcam/telemóvel no cadastro', done: true },
+      { name: 'Permitir registo de pagamentos em dinheiro físico (Tesouraria)', done: true },
+      { name: "Implementar 'Caixa Diário' para controlo de entradas/saídas em dinheiro", done: false },
+      { name: 'Implementar lógica de desconto automático para irmãos', done: false },
+      { name: 'Adicionar campo de "Observações Qualitativas" no lançamento de notas', done: false },
+      { name: 'Adicionar assinatura digital nos boletins', done: false },
+    ]
+  },
+  {
+    title: 'Fase 1.2: Funcionalidades para Professores',
+    status: 'A Fazer',
+    variant: 'warning' as const,
+    features: [
+      { name: 'Módulo de Plano de Aula (Criar, editar e consultar)', done: false },
+      { name: 'Calendário Pessoal do Professor (Visão própria no calendário)', done: false },
+    ]
+  },
+  {
+    title: 'Fase 1.3: Administração e Configuração do Sistema',
+    status: 'A Fazer',
+    variant: 'warning' as const,
+    features: [
+      { name: 'Módulo de Gestão de Utilizadores (CRUD de contas e perfis)', done: false },
+      { name: 'Módulo de Configurações do Sistema (Dados da escola, ano letivo, etc.)', done: false },
+      { name: 'Reset de senhas de utilizadores pelo Administrador', done: false },
+    ]
+  },
+  {
+    title: 'Fase 1.4: Expansão de Módulos',
+    status: 'A Fazer',
+    variant: 'warning' as const,
+    features: [
+      { name: 'Módulo de Gestão de Saúde Simplificada (Ocorrências)', done: false },
+      { name: "Evoluir módulo de Comunicação para um 'Mural Digital' mais robusto", done: false },
+    ]
+  },
+  {
+    title: 'MVP 2: Futuras Evoluções',
+    status: 'Planeado',
+    variant: 'default' as const,
+    features: [
+      { name: 'Implementar arquitetura Offline-First para resiliência de conexão', done: false },
+      { name: 'Integração com pagamentos móveis (M-Pesa, e-Mola)', done: false },
+      { name: 'Envio de alertas e notificações por SMS', done: false },
+      { name: 'Assistente de IA para elaboração de Planos de Aula', done: false },
+      { name: 'Relatórios académicos preditivos (Risco de evasão, etc.)', done: false },
+      { name: 'Aplicação móvel dedicada (PWA ou Nativa)', done: false },
     ]
   },
 ];
 
 const FeatureItem: React.FC<{ done: boolean; children: React.ReactNode }> = ({ children, done }) => (
   <li className="flex items-center space-x-3 py-1">
-    <input type="checkbox" checked={done} disabled className="form-checkbox h-5 w-5 text-reviva-green rounded focus:ring-reviva-green-light cursor-not-allowed" />
+    <input
+      type="checkbox"
+      checked={done}
+      readOnly
+      className="form-checkbox h-5 w-5 text-reviva-green rounded focus:ring-reviva-green-light cursor-pointer"
+      aria-label={done ? 'Completo' : 'A fazer'}
+    />
     <span className={`${done ? 'line-through text-slate-500 dark:text-slate-400' : 'text-slate-700 dark:text-slate-300'}`}>
       {children}
     </span>

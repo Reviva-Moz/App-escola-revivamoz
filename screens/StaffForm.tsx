@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
@@ -43,6 +44,7 @@ const StaffForm: React.FC = () => {
                         </Select>
                         <Input label="Email" id="email" type="email" required />
                         <Input label="Contacto Telefónico" id="phone" type="tel" required />
+                        <Input label="NUIT" id="nuit" placeholder="Opcional" />
                          <Select label="Status" id="status">
                             <option>Ativo</option>
                             <option>Inativo</option>

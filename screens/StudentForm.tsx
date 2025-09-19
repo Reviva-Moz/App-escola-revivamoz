@@ -9,6 +9,7 @@ import { Select } from '../components/ui/Select';
 import { supabase } from '../utils/supabase';
 import { Class } from '../types';
 import { CLASSES_DATA, STUDENTS_DATA } from '../constants';
+import WebcamCapture from '../components/WebcamCapture';
 
 const StudentForm: React.FC = () => {
     const { id } = useParams();
@@ -22,7 +23,10 @@ const StudentForm: React.FC = () => {
     const [guardian, setGuardian] = useState('');
     const [phone, setPhone] = useState('');
     const [status, setStatus] = useState('Ativo');
-    
+    const [nuit, setNuit] = useState('');
+    const [healthNotes, setHealthNotes] = useState('');
+    const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
+
     const [classes, setClasses] = useState<Pick<Class, 'id' | 'name'>[]>([]);
     const [loading, setLoading] = useState(true);
     const [formError, setFormError] = useState<string | null>(null);
@@ -56,7 +60,6 @@ const StudentForm: React.FC = () => {
                     if (error) {
                         console.error('Error fetching student data:', error);
                         setFormError("Não foi possível carregar os dados do aluno.");
-                        setLoading(false);
                     } else if (data) {
                         setName(data.name);
                         setClassId(data.class_id?.toString() || '');
@@ -64,7 +67,9 @@ const StudentForm: React.FC = () => {
                         setGuardian(data.guardian || '');
                         setPhone(data.phone || '');
                         setStatus(data.status || 'Ativo');
-                        setLoading(false);
+                        setNuit(data.nuit || '');
+                        setHealthNotes(data.health_notes || '');
+                        setPhotoDataUrl(data.photo_url || null);
                     }
                 } else {
                     // Fallback for student data
@@ -76,9 +81,12 @@ const StudentForm: React.FC = () => {
                          setGuardian(mockStudent.guardian);
                          setPhone(mockStudent.phone);
                          setStatus(mockStudent.status);
+                         setNuit(mockStudent.nuit || '');
+                         setHealthNotes(mockStudent.healthNotes || '');
+                         setPhotoDataUrl(mockStudent.photoUrl || null);
                     }
-                    setLoading(false);
                 }
+                setLoading(false);
             } else {
                 setLoading(false);
             }
@@ -87,7 +95,7 @@ const StudentForm: React.FC = () => {
         fetchClasses();
         fetchStudentData();
 
-    }, [id, isEditing, navigate]);
+    }, [id, isEditing]);
 
     const title = isEditing ? 'Editar Aluno' : 'Cadastrar Novo Aluno';
     const subtitle = isEditing ? 'Atualize as informações do aluno' : 'Preencha os dados para criar um novo registo';
@@ -109,7 +117,17 @@ const StudentForm: React.FC = () => {
                 guardian,
                 phone,
                 status,
+                nuit: nuit || null,
+                health_notes: healthNotes || null,
+                // In a real app, you would upload the photoDataUrl to Supabase Storage
+                // and save the returned URL here. For now, we save a placeholder.
+                photo_url: photoDataUrl ? (isEditing && id && photoDataUrl.startsWith('http') ? photoDataUrl : `photos/student_${id || Date.now()}.jpg`) : null,
             };
+
+            if (photoDataUrl && !photoDataUrl.startsWith('http')) {
+              console.log("Simulando upload da foto para o Supabase Storage...");
+              // Here you would implement the actual upload logic.
+            }
 
             const { error } = isEditing
                 ? await supabase.from('students').update(studentData).eq('id', id)
@@ -122,10 +140,8 @@ const StudentForm: React.FC = () => {
                 navigate('/alunos');
             }
         } else {
-            // Fallback behavior when Supabase is not configured
             console.warn("Supabase not configured. Simulating save.");
-            alert("Modo de demonstração: Os dados do formulário foram registados na consola, mas não serão guardados permanentemente.");
-            console.log("Submitted Data:", { name, classId, age, guardian, phone, status });
+            console.log("Submitted Data:", { name, classId, age, guardian, phone, status, nuit, healthNotes, photoDataUrl });
             navigate('/alunos');
         }
     };
@@ -143,35 +159,55 @@ const StudentForm: React.FC = () => {
                 <PageHeader title={title} subtitle={subtitle} />
             </div>
             
-            <Card>
-                <form onSubmit={handleSubmit} className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                        <Input label="Nome Completo" id="fullName" required value={name} onChange={e => setName(e.target.value)} />
-                        <Input label="Idade" id="age" type="number" value={age} onChange={e => setAge(e.target.value)} />
-                        <Select label="Turma Atual" id="class" required value={classId} onChange={e => setClassId(e.target.value)}>
-                           <option value="">Selecione a turma</option>
-                           {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                        </Select>
-                        <Input label="Nome do Encarregado" id="guardianName" required value={guardian} onChange={e => setGuardian(e.target.value)} />
-                        <Input label="Contacto Telefónico" id="guardianPhone" type="tel" required value={phone} onChange={e => setPhone(e.target.value)} />
-                         <Select label="Status" id="status" required value={status} onChange={e => setStatus(e.target.value)}>
-                            <option value="Ativo">Ativo</option>
-                            <option value="Inativo">Inativo</option>
-                        </Select>
+            <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2">
+                        <Card className="p-6">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <h3 className="md:col-span-2 text-xl font-semibold text-slate-800 dark:text-slate-200 border-b-2 border-reviva-green pb-2">Dados Pessoais e Académicos</h3>
+                                <Input label="Nome Completo" id="fullName" required value={name} onChange={e => setName(e.target.value)} />
+                                <Input label="Idade" id="age" type="number" value={age} onChange={e => setAge(e.target.value)} />
+                                <Select label="Turma Atual" id="class" required value={classId} onChange={e => setClassId(e.target.value)}>
+                                <option value="">Selecione a turma</option>
+                                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                </Select>
+                                 <Select label="Status" id="status" required value={status} onChange={e => setStatus(e.target.value)}>
+                                    <option value="Ativo">Ativo</option>
+                                    <option value="Inativo">Inativo</option>
+                                </Select>
+                                <h3 className="md:col-span-2 text-xl font-semibold text-slate-800 dark:text-slate-200 border-b-2 border-reviva-green pb-2 pt-4">Dados do Encarregado e Adicionais</h3>
+                                <Input label="Nome do Encarregado" id="guardianName" required value={guardian} onChange={e => setGuardian(e.target.value)} />
+                                <Input label="Contacto Telefónico" id="guardianPhone" type="tel" required value={phone} onChange={e => setPhone(e.target.value)} />
+                                <Input label="NUIT" id="nuit" type="text" value={nuit} onChange={e => setNuit(e.target.value)} placeholder="Opcional"/>
+                                <div className="md:col-span-2">
+                                    <label htmlFor="healthNotes" className="mb-1 block text-sm font-medium text-slate-600 dark:text-slate-300">Ficha de Saúde Básica (Alergias, etc.)</label>
+                                    <textarea id="healthNotes" rows={4} value={healthNotes} onChange={e => setHealthNotes(e.target.value)} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg"></textarea>
+                                </div>
+                            </div>
+                        </Card>
                     </div>
+                    <div>
+                         <Card className="p-6">
+                            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 border-b-2 border-reviva-green pb-2 mb-4">Fotografia do Aluno</h3>
+                            <WebcamCapture
+                                onCapture={setPhotoDataUrl}
+                                initialImage={photoDataUrl}
+                            />
+                        </Card>
+                    </div>
+                </div>
 
-                    {formError && <p className="text-red-500 text-sm mb-4">{formError}</p>}
-                    
-                    <div className="flex justify-end mt-8 gap-4">
-                        <Button type="button" variant="secondary" onClick={() => navigate('/alunos')}>
-                            Cancelar
-                        </Button>
-                        <Button type="submit">
-                            {isEditing ? 'Salvar Alterações' : 'Cadastrar Aluno'}
-                        </Button>
-                    </div>
-                </form>
-            </Card>
+                {formError && <p className="text-red-500 text-sm mt-4 text-center">{formError}</p>}
+                
+                <div className="flex justify-end mt-8 gap-4">
+                    <Button type="button" variant="secondary" onClick={() => navigate('/alunos')}>
+                        Cancelar
+                    </Button>
+                    <Button type="submit">
+                        {isEditing ? 'Salvar Alterações' : 'Cadastrar Aluno'}
+                    </Button>
+                </div>
+            </form>
         </>
     );
 };

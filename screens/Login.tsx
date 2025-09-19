@@ -1,6 +1,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { UserRole } from '../types';
+
+const USERS: Record<string, { password: string; role: UserRole }> = {
+    'admin@reviva.mz': { password: '123456', role: 'ADMINISTRADOR' },
+    'direccao@reviva.mz': { password: '123456', role: 'DIRETORIA' },
+    'secretaria@reviva.mz': { password: '123456', role: 'SECRETARIA' },
+    'responsavel@reviva.mz': { password: '123456', role: 'RESPONSAVEL' },
+    'professor@reviva.mz': { password: '123456', role: 'PROFESSOR' },
+    'aluno@reviva.mz': { password: '123456', role: 'ALUNO' },
+    // Legacy user for quick access during demos
+    'admin@reviva.com': { password: 'admin', role: 'ADMINISTRADOR' },
+};
+
 
 const Login: React.FC = () => {
     const navigate = useNavigate();
@@ -12,12 +25,14 @@ const Login: React.FC = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        // Simple validation for demonstration
-        if (email === 'admin@reviva.com' && password === 'admin') {
-            login();
+        
+        const userCredentials = USERS[email.toLowerCase()];
+
+        if (userCredentials && userCredentials.password === password) {
+            login(email, userCredentials.role);
             navigate('/');
         } else {
-            setError('Credenciais inválidas. Tente "admin@reviva.com" e "admin".');
+            setError('Credenciais inválidas. Verifique o seu e-mail e senha.');
         }
     };
 

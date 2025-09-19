@@ -1,29 +1,28 @@
 import React, { createContext, useState, useContext, ReactNode } from 'react';
+import { User, UserRole } from '../types';
 
 interface AuthContextType {
+  user: User | null;
   isAuthenticated: boolean;
-  login: () => void;
+  login: (email: string, role: UserRole) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // In a real app, this would be determined by a token, etc.
-  // Default to false to force login.
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
-  const login = () => {
-    // In a real app, this would involve an API call.
-    setIsAuthenticated(true);
+  const login = (email: string, role: UserRole) => {
+    setUser({ email, role });
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

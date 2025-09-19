@@ -3,6 +3,7 @@
 
 
 
+
 import React, { useState } from 'react';
 import PageHeader from '../components/Header';
 import StatCard from '../components/StatCard';
@@ -82,6 +83,7 @@ const TransactionLedger: React.FC<{
             t.description,
             category?.name || 'Sem Categoria',
             <Badge variant={t.type === 'Receita' ? 'success' : 'destructive'}>{t.type}</Badge>,
+            t.paymentMethod || 'N/D',
             <span className={`font-bold ${t.type === 'Receita' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                 {t.type === 'Receita' ? '+' : '-'} {formatCurrency(t.amount)}
             </span>,
@@ -99,7 +101,7 @@ const TransactionLedger: React.FC<{
                 <Button onClick={onAdd}><PlusIcon className="h-5 w-5 mr-2"/>Nova Transação</Button>
             </div>
             <DataTable 
-                headers={['Data', 'Descrição', 'Categoria', 'Tipo', 'Valor', 'Ações']}
+                headers={['Data', 'Descrição', 'Categoria', 'Tipo', 'Método', 'Valor', 'Ações']}
                 rows={transactionRows} 
                 title=""
             />
@@ -222,7 +224,7 @@ const Financial: React.FC = () => {
     };
     const handleSaveTransaction = (data: Omit<Transaction, 'id'>) => {
         if (editingTransaction) { // Editing
-            setTransactions(trans => trans.map(t => t.id === editingTransaction.id ? { ...t, ...data } : t));
+            setTransactions(trans => trans.map(t => t.id === editingTransaction.id ? { ...editingTransaction, ...data } : t));
         } else { // Adding
             const newTransaction: Transaction = { ...data, id: Date.now() };
             setTransactions(trans => [...trans, newTransaction]);
@@ -408,6 +410,7 @@ const TransactionForm: React.FC<{
     const [type, setType] = useState<Transaction['type']>(transaction?.type || 'Receita');
     const [categoryId, setCategoryId] = useState(transaction?.categoryId.toString() || '');
     const [amount, setAmount] = useState(transaction?.amount.toString() || '');
+    const [paymentMethod, setPaymentMethod] = useState<Transaction['paymentMethod']>(transaction?.paymentMethod || 'Dinheiro');
     
     const filteredCategories = categories.filter(c => c.type === type);
 
@@ -420,7 +423,7 @@ const TransactionForm: React.FC<{
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({ date, description, type, categoryId: parseInt(categoryId), amount: parseFloat(amount) });
+        onSave({ date, description, type, categoryId: parseInt(categoryId), amount: parseFloat(amount), paymentMethod });
     }
 
     return (
@@ -434,9 +437,14 @@ const TransactionForm: React.FC<{
                 </Select>
                 <Input id="amount" label="Valor (MZN)" type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} required />
             </div>
-            <Select id="category" label="Categoria" value={categoryId} onChange={e => setCategoryId(e.target.value)} required>
+             <Select id="category" label="Categoria" value={categoryId} onChange={e => setCategoryId(e.target.value)} required>
                 <option value="">Selecione uma categoria</option>
                 {filteredCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </Select>
+            <Select id="paymentMethod" label="Método de Pagamento" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value as Transaction['paymentMethod'])}>
+                <option value="Dinheiro">Dinheiro</option>
+                <option value="Transferência">Transferência Bancária</option>
+                <option value="Digital">Digital (M-Pesa, e-Mola)</option>
             </Select>
             <div className="flex justify-end gap-4 pt-4">
                 <Button type="button" variant="secondary" onClick={onCancel}>Cancelar</Button>

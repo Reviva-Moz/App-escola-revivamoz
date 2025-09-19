@@ -58,12 +58,12 @@ export const STUDENT_SCHOLARSHIPS_DATA: StudentScholarship[] = [
 ];
 
 export const TRANSACTIONS_DATA: Transaction[] = [
-  { id: 1, date: '2024-07-01', description: 'Mensalidade - Ana Silva', type: 'Receita', categoryId: 1, amount: 1500 },
-  { id: 2, date: '2024-07-02', description: 'Compra de material de escritório', type: 'Despesa', categoryId: 102, amount: 250 },
-  { id: 3, date: '2024-07-05', description: 'Pagamento de salário - Carlos Neto', type: 'Despesa', categoryId: 101, amount: 20000 },
-  { id: 4, date: '2024-07-10', description: 'Venda de Uniformes', type: 'Receita', categoryId: 3, amount: 800 },
-  { id: 5, date: '2024-07-12', description: 'Pagamento conta de luz', type: 'Despesa', categoryId: 104, amount: 1200 },
-  { id: 6, date: '2024-07-15', description: 'Matrícula - Novo Aluno', type: 'Receita', categoryId: 2, amount: 5000 },
+  { id: 1, date: '2024-07-01', description: 'Mensalidade - Ana Silva', type: 'Receita', categoryId: 1, amount: 1500, paymentMethod: 'Digital' },
+  { id: 2, date: '2024-07-02', description: 'Compra de material de escritório', type: 'Despesa', categoryId: 102, amount: 250, paymentMethod: 'Dinheiro' },
+  { id: 3, date: '2024-07-05', description: 'Pagamento de salário - Carlos Neto', type: 'Despesa', categoryId: 101, amount: 20000, paymentMethod: 'Transferência' },
+  { id: 4, date: '2024-07-10', description: 'Venda de Uniformes', type: 'Receita', categoryId: 3, amount: 800, paymentMethod: 'Dinheiro' },
+  { id: 5, date: '2024-07-12', description: 'Pagamento conta de luz', type: 'Despesa', categoryId: 104, amount: 1200, paymentMethod: 'Digital' },
+  { id: 6, date: '2024-07-15', description: 'Matrícula - Novo Aluno', type: 'Receita', categoryId: 2, amount: 5000, paymentMethod: 'Dinheiro' },
 ];
 
 export const STUDENTS_DATA: Student[] = [
@@ -83,11 +83,11 @@ export const TEACHERS_DATA: Teacher[] = [
 ];
 
 export const STAFF_DATA: Staff[] = [
-  { id: 1, name: 'Carlos Neto', role: 'Professor', department: 'Académico', email: 'carlos.neto@reviva.com', phone: '84 111 2222', status: 'Ativo' },
-  { id: 2, name: 'Fernanda Alves', role: 'Professora', department: 'Académico', email: 'fernanda.alves@reviva.com', phone: '82 333 4444', status: 'Ativo' },
+  { id: 1, name: 'Carlos Neto', role: 'Professor', department: 'Académico', email: 'carlos.neto@reviva.com', phone: '84 111 2222', status: 'Ativo', nuit: '123456789' },
+  { id: 2, name: 'Fernanda Alves', role: 'Professora', department: 'Académico', email: 'fernanda.alves@reviva.com', phone: '82 333 4444', status: 'Ativo', nuit: '987654321' },
   { id: 3, name: 'Mariana Lima', role: 'Professora', department: 'Académico', email: 'mariana.lima@reviva.com', phone: '86 555 6666', status: 'Ativo' },
   { id: 4, name: 'Ricardo Sousa', role: 'Professor', department: 'Académico', email: 'ricardo.sousa@reviva.com', phone: '87 888 9999', status: 'Inativo' },
-  { id: 5, name: 'Sónia Pereira', role: 'Secretária', department: 'Administrativo', email: 'sonia.p@reviva.com', phone: '84 222 3333', status: 'Ativo' },
+  { id: 5, name: 'Sónia Pereira', role: 'Secretária', department: 'Administrativo', email: 'sonia.p@reviva.com', phone: '84 222 3333', status: 'Ativo', nuit: '112233445' },
   { id: 6, name: 'Jorge Mendes', role: 'Segurança', department: 'Operações', email: 'jorge.m@reviva.com', phone: '82 444 5555', status: 'Ativo' },
   { id: 7, name: 'Luísa Santos', role: 'Coordenadora Pedagógica', department: 'Académico', email: 'luisa.santos@reviva.com', phone: '86 666 7777', status: 'Ativo' },
 ];
