@@ -1,4 +1,5 @@
 
+
 export interface Student {
   id: number;
   name: string;
@@ -16,6 +17,16 @@ export interface Teacher {
     email: string;
     phone: string;
     qualifications: string;
+    status: 'Ativo' | 'Inativo';
+}
+
+export interface Staff {
+    id: number;
+    name: string;
+    role: string;
+    department: string;
+    email: string;
+    phone: string;
     status: 'Ativo' | 'Inativo';
 }
 
@@ -115,4 +126,31 @@ export interface Transaction {
   type: 'Receita' | 'Despesa';
   categoryId: number;
   amount: number;
+}
+
+export interface Announcement {
+  id: number;
+  title: string;
+  content: string;
+  target: 'Todos' | 'Professores' | 'Pais' | string; // string for specific class
+  date: string; // ISO string date
+}
+
+export interface Book {
+  id: number;
+  title: string;
+  author: string;
+  isbn: string;
+  totalStock: number;
+  availableStock: number;
+}
+
+export interface BookLoan {
+  id: number;
+  bookId: number;
+  studentId: number;
+  loanDate: string; // YYYY-MM-DD
+  dueDate: string; // YYYY-MM-DD
+  returnDate?: string; // YYYY-MM-DD
+  status: 'Em Dia' | 'Atrasado' | 'Devolvido';
 }

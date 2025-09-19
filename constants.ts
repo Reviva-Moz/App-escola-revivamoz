@@ -1,4 +1,4 @@
-import { Student, Teacher, Subject, Class, FinancialCategory, Enrollment, Tuition, StudentGrades, CalendarEvent, ClassCurriculum, Category, Scholarship, StudentScholarship, Transaction } from './types';
+import { Student, Teacher, Subject, Class, FinancialCategory, Enrollment, Tuition, StudentGrades, CalendarEvent, ClassCurriculum, Category, Scholarship, StudentScholarship, Transaction, Announcement, Book, BookLoan, Staff } from './types';
 
 export const TOTAL_STUDENTS = 342;
 export const TOTAL_TEACHERS = 28;
@@ -80,6 +80,16 @@ export const TEACHERS_DATA: Teacher[] = [
     { id: 2, name: 'Fernanda Alves', email: 'fernanda.alves@reviva.com', phone: '82 333 4444', qualifications: 'Mestrado em Matemática', status: 'Ativo' },
     { id: 3, name: 'Mariana Lima', email: 'mariana.lima@reviva.com', phone: '86 555 6666', qualifications: 'Licenciatura em Letras', status: 'Ativo' },
     { id: 4, name: 'Ricardo Sousa', email: 'ricardo.sousa@reviva.com', phone: '87 888 9999', qualifications: 'Doutoramento em Ciências', status: 'Inativo' },
+];
+
+export const STAFF_DATA: Staff[] = [
+  { id: 1, name: 'Carlos Neto', role: 'Professor', department: 'Académico', email: 'carlos.neto@reviva.com', phone: '84 111 2222', status: 'Ativo' },
+  { id: 2, name: 'Fernanda Alves', role: 'Professora', department: 'Académico', email: 'fernanda.alves@reviva.com', phone: '82 333 4444', status: 'Ativo' },
+  { id: 3, name: 'Mariana Lima', role: 'Professora', department: 'Académico', email: 'mariana.lima@reviva.com', phone: '86 555 6666', status: 'Ativo' },
+  { id: 4, name: 'Ricardo Sousa', role: 'Professor', department: 'Académico', email: 'ricardo.sousa@reviva.com', phone: '87 888 9999', status: 'Inativo' },
+  { id: 5, name: 'Sónia Pereira', role: 'Secretária', department: 'Administrativo', email: 'sonia.p@reviva.com', phone: '84 222 3333', status: 'Ativo' },
+  { id: 6, name: 'Jorge Mendes', role: 'Segurança', department: 'Operações', email: 'jorge.m@reviva.com', phone: '82 444 5555', status: 'Ativo' },
+  { id: 7, name: 'Luísa Santos', role: 'Coordenadora Pedagógica', department: 'Académico', email: 'luisa.santos@reviva.com', phone: '86 666 7777', status: 'Ativo' },
 ];
 
 export const SUBJECTS_DATA: Subject[] = [
@@ -220,4 +230,42 @@ export const CALENDAR_EVENTS_DATA: CalendarEvent[] = [
         description: "Reunião para entrega de notas e discussão do desempenho dos alunos.",
         createdAt: "2024-06-10T11:00:00.000Z",
     },
+];
+
+export const ANNOUNCEMENTS_DATA: Announcement[] = [
+    {
+        id: 1,
+        title: 'Reunião de Pais e Mestres - 2º Trimestre',
+        content: 'Caros pais e encarregados, a reunião para entrega de notas e discussão do desempenho dos alunos do 2º trimestre será no dia 28 de Junho, às 17h. A vossa presença é fundamental.',
+        target: 'Pais',
+        date: '2024-06-20T10:00:00.000Z'
+    },
+    {
+        id: 2,
+        title: 'Festa de Fim de Ano Letivo',
+        content: 'Convidamos toda a comunidade escolar para a nossa festa de encerramento do ano letivo no dia 5 de Dezembro. Haverá apresentações dos alunos, comes e bebes, e muita diversão!',
+        target: 'Todos',
+        date: '2024-06-18T15:30:00.000Z'
+    },
+    {
+        id: 3,
+        title: 'Atualização de Pautas - 7ª Classe',
+        content: 'As pautas de Matemática e Ciências da 7ª Classe já foram lançadas no sistema. Os professores devem verificar e submeter as notas finais até sexta-feira.',
+        target: 'Professores',
+        date: '2024-06-15T09:00:00.000Z'
+    }
+];
+
+export const BOOKS_DATA: Book[] = [
+    { id: 1, title: 'O Gato Malhado e a Andorinha Sinhá', author: 'Jorge Amado', isbn: '978-972-20-3332-5', totalStock: 5, availableStock: 2 },
+    { id: 2, title: 'Matemática 101', author: 'Ministério da Educação', isbn: '123-456-789-012-3', totalStock: 10, availableStock: 10 },
+    { id: 3, title: 'Uma Aventura na Floresta', author: 'Ana Maria Magalhães', isbn: '978-972-21-2358-3', totalStock: 8, availableStock: 5 },
+    { id: 4, title: 'História de Moçambique', author: 'Coletivo', isbn: '456-789-012-345-6', totalStock: 3, availableStock: 3 },
+];
+
+export const BOOK_LOANS_DATA: BookLoan[] = [
+    { id: 1, bookId: 1, studentId: 1, loanDate: '2024-07-10', dueDate: '2024-07-24', status: 'Em Dia' },
+    { id: 2, bookId: 3, studentId: 2, loanDate: '2024-07-05', dueDate: '2024-07-19', status: 'Em Dia' },
+    { id: 3, bookId: 1, studentId: 3, loanDate: '2024-06-20', dueDate: '2024-07-04', status: 'Atrasado' },
+    { id: 4, bookId: 3, studentId: 5, loanDate: '2024-07-15', dueDate: '2024-07-29', status: 'Em Dia' },
 ];

@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import PageHeader from '../components/Header';
 import { Card } from '../components/ui/Card';
@@ -52,20 +53,20 @@ const phases = [
   },
   {
     title: 'Fase 5: Expansão e Ecossistema',
-    status: 'Em Progresso',
-    variant: 'warning' as const,
+    status: 'Concluído',
+    variant: 'success' as const,
     features: [
-      { name: 'Portal do Aluno e Encarregado (Consulta de Notas e Faltas)', done: false },
-      { name: 'Sistema de Comunicação (Avisos e Mensagens)', done: false },
-      { name: 'Pagamentos Online de Mensalidades (Integração M-Pesa/eMola)', done: false },
-      { name: 'Gestão de Biblioteca', done: false },
-      { name: 'Módulo de Recursos Humanos Simplificado', done: false },
+      { name: 'Pagamentos Online de Mensalidades (Integração M-Pesa/eMola)', done: true },
+      { name: 'Portal do Aluno e Encarregado (Consulta de Notas e Faltas)', done: true },
+      { name: 'Sistema de Comunicação (Avisos e Mensagens)', done: true },
+      { name: 'Gestão de Biblioteca', done: true },
+      { name: 'Módulo de Recursos Humanos Simplificado', done: true },
     ]
   },
   {
     title: 'Fase 6: Melhorias Contínuas & Integrações Futuras',
-    status: 'Planeado',
-    variant: 'default' as const,
+    status: 'Em Progresso',
+    variant: 'warning' as const,
     features: [
       { name: 'Aplicativo Móvel para Pais e Professores', done: false },
       { name: 'Integração com Plataformas EAD (Moodle, Google Classroom)', done: false },

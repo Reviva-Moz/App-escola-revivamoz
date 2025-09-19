@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
 import DataTable from '../components/DataTable';
 import { Student } from '../types';
-import { PlusIcon, PencilIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, IdentificationIcon } from '@heroicons/react/24/outline';
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -73,8 +74,12 @@ const Students: React.FC = () => {
         >
          <PencilIcon className="h-4 w-4 mr-1"/> Editar
       </Button>
-      <Button variant="link" className="text-reviva-green hover:text-reviva-green-dark">
-        <DocumentDuplicateIcon className="h-4 w-4 mr-1"/> Gerar Doc.
+      <Button 
+        variant="link" 
+        className="text-reviva-green hover:text-reviva-green-dark"
+        onClick={() => navigate(`/portal-aluno/${studentId}`)}
+      >
+        <IdentificationIcon className="h-4 w-4 mr-1"/> Ver Portal
       </Button>
     </div>
   );

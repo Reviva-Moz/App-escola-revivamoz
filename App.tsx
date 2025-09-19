@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -22,6 +23,12 @@ import Calendar from './screens/Calendar';
 import Reports from './screens/Reports';
 import ProvaCalendar from './screens/ProvaCalendar';
 import ActionPlan from './screens/ActionPlan';
+import Payments from './screens/Payments';
+import StudentPortal from './screens/StudentPortal';
+import Communication from './screens/Communication';
+import Library from './screens/Library';
+import HR from './screens/HR';
+import StaffForm from './screens/StaffForm';
 
 const App: React.FC = () => {
   return (
@@ -39,6 +46,7 @@ const App: React.FC = () => {
                 <Route path="/alunos" element={<Students />} />
                 <Route path="/alunos/novo" element={<StudentForm />} />
                 <Route path="/alunos/:id/editar" element={<StudentForm />} />
+                <Route path="/portal-aluno/:id" element={<StudentPortal />} />
                 <Route path="/financeiro" element={<Financial />} />
                 
                 {/* Rotas da Fase 2 */}
@@ -52,14 +60,20 @@ const App: React.FC = () => {
                 <Route path="/disciplinas" element={<Subjects />} />
                 <Route path="/disciplinas/novo" element={<SubjectForm />} />
                 <Route path="/disciplinas/:id/editar" element={<SubjectForm />} />
+                <Route path="/biblioteca" element={<Library />} />
 
                 {/* Rotas da Fase 3 */}
                 <Route path="/assiduidade" element={<Attendance />} />
                 <Route path="/cadernetas" element={<Grades />} />
                 <Route path="/provas" element={<ProvaCalendar />} />
+                <Route path="/pagamentos" element={<Payments />} />
+                <Route path="/comunicacao" element={<Communication />} />
 
                 <Route path="/calendario" element={<Calendar />} />
                 <Route path="/relatorios" element={<Reports />} />
+                <Route path="/recursos-humanos" element={<HR />} />
+                <Route path="/recursos-humanos/novo" element={<StaffForm />} />
+                <Route path="/recursos-humanos/:id/editar" element={<StaffForm />} />
                 <Route path="/plano-de-acao" element={<ActionPlan />} />
               </Routes>
             </Layout>
