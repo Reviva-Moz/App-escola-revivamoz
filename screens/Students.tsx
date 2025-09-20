@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
 import DataTable from '../components/DataTable';
@@ -8,61 +8,27 @@ import { PlusIcon, PencilIcon, IdentificationIcon } from '@heroicons/react/24/ou
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { supabase } from '../utils/supabase';
-import { STUDENTS_DATA } from '../constants'; // Keep for fallback
+import { useData } from '../context/DataContext';
 
 const Students: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { students, classes } = useData();
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-
-      if (supabase) {
-        // --- Supabase path ---
-        const { data, error } = await supabase
-          .from('students')
-          .select('*, classes(name)') // Use a JOIN to get the class name
-          .order('name', { ascending: true });
-
-        if (error) {
-          console.error('Error fetching students:', error);
-          setError('Não foi possível carregar os alunos do banco de dados.');
-        } else {
-          // Map Supabase data (snake_case) to our component's expected type (camelCase)
-          const formattedData: Student[] = data.map(student => ({
-            id: student.id,
-            name: student.name,
-            age: student.age,
-            guardian: student.guardian,
-            phone: student.phone,
-            status: student.status,
-            classId: student.class_id,
-            class: (student.classes as { name: string })?.name || 'N/A',
-          }));
-          setStudents(formattedData);
-        }
-      } else {
-        // --- Fallback to mock data path ---
-        console.warn("Supabase not configured. Falling back to mock data for Students.");
-        await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network
-        setStudents(STUDENTS_DATA);
-      }
-      setLoading(false);
-    };
-
-    fetchData();
-  }, []);
+  const studentsWithClassNames = useMemo(() => {
+    return students.map(student => {
+      const studentClass = classes.find(c => c.id === student.classId);
+      return {
+        ...student,
+        class: studentClass ? studentClass.name : 'N/A',
+      };
+    });
+  }, [students, classes]);
 
   const filteredStudents = useMemo(() => 
-    students.filter(student =>
+    studentsWithClassNames.filter(student =>
       student.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ), [searchTerm, students]
+    ), [searchTerm, studentsWithClassNames]
   );
 
   const actionButtons = (studentId: number) => (
@@ -116,17 +82,11 @@ const Students: React.FC = () => {
         </div>
       </PageHeader>
       
-      {loading ? (
-         <div className="text-center py-8">A carregar alunos...</div>
-      ) : error ? (
-         <div className="text-center py-8 text-red-500">{error}</div>
-      ) : (
-         <DataTable
-            title="Alunos Matriculados"
-            headers={['Nome', 'Classe', 'Idade', 'Encarregado', 'Telefone', 'Status', 'Ações']}
-            rows={studentRows}
-          />
-      )}
+       <DataTable
+          title="Alunos Matriculados"
+          headers={['Nome', 'Classe', 'Idade', 'Encarregado', 'Telefone', 'Status', 'Ações']}
+          rows={studentRows}
+        />
     </>
   );
 };

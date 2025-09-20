@@ -1,29 +1,25 @@
 
 
-
-
-
-
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import PageHeader from '../components/Header';
 import StatCard from '../components/StatCard';
 import DataTable from '../components/DataTable';
 import CategoryPieChart from '../components/charts/CategoryPieChart';
 import { formatCurrency } from '../utils/formatters';
 import { 
-    FINANCIAL_SUMMARY, REVENUE_CATEGORIES, EXPENSE_CATEGORIES, ENROLLMENTS_DATA, TUITION_DATA, 
-    CATEGORIES_DATA, SCHOLARSHIPS_DATA, STUDENT_SCHOLARSHIPS_DATA, TRANSACTIONS_DATA
+    FINANCIAL_SUMMARY, REVENUE_CATEGORIES, EXPENSE_CATEGORIES, ENROLLMENTS_DATA, PAYMENT_METHODS_DATA
 } from '../constants';
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ScaleIcon, CurrencyDollarIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Enrollment, Tuition, Category, Scholarship, Transaction } from '../types';
+import { Enrollment, Tuition, Category, Scholarship, Transaction, PaymentMethod } from '../types';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Card } from '../components/ui/Card';
+import { useData } from '../context/DataContext';
 
-type Tab = 'dashboard' | 'transactions' | 'enrollments' | 'tuition' | 'categories' | 'scholarships';
+type Tab = 'dashboard' | 'transactions' | 'cashier' | 'enrollments' | 'tuition' | 'scholarships' | 'categories' | 'paymentMethods';
 
 const FinancialDashboard: React.FC = () => (
     <div>
@@ -60,6 +56,96 @@ const FinancialDashboard: React.FC = () => (
     </div>
 );
 
+const DailyCashier: React.FC<{ transactions: Transaction[], categories: Category[] }> = ({ transactions, categories }) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const [selectedDate, setSelectedDate] = useState(todayStr);
+
+    const cashTransactions = useMemo(() =>
+        transactions.filter(t => t.paymentMethod === 'Dinheiro' && t.date === selectedDate)
+    , [transactions, selectedDate]);
+    
+    const dailyIncome = useMemo(() => cashTransactions.filter(t => t.type === 'Receita').reduce((sum, t) => sum + t.amount, 0), [cashTransactions]);
+    const dailyExpense = useMemo(() => cashTransactions.filter(t => t.type === 'Despesa').reduce((sum, t) => sum + t.amount, 0), [cashTransactions]);
+    const dailyBalance = dailyIncome - dailyExpense;
+
+    const rows = cashTransactions.map(t => {
+        const category = categories.find(c => c.id === t.categoryId);
+        return [
+            t.description,
+            category?.name || 'N/A',
+            <Badge variant={t.type === 'Receita' ? 'success' : 'destructive'}>{t.type}</Badge>,
+            <span className={`font-bold ${t.type === 'Receita' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                {t.type === 'Receita' ? '+' : '-'} {formatCurrency(t.amount)}
+            </span>
+        ];
+    });
+
+    return (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+                 <DataTable title={`Movimentos do dia ${new Date(selectedDate + 'T00:00:00').toLocaleDateString('pt-MZ')}`} headers={['Descrição', 'Categoria', 'Tipo', 'Valor']} rows={rows} />
+            </div>
+            <div>
+                <Card>
+                    <div className="p-4 border-b dark:border-slate-700">
+                        <h3 className="text-lg font-semibold">Resumo do Caixa</h3>
+                    </div>
+                     <div className="p-6 space-y-4">
+                         <div>
+                            <label htmlFor="cashier-date" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Selecionar Data</label>
+                            <Input id="cashier-date" type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
+                        </div>
+                        <div className="space-y-3 pt-4">
+                             <div className="flex justify-between items-center text-lg">
+                                <span className="text-slate-600 dark:text-slate-300">Total Entradas:</span>
+                                <span className="font-bold text-green-600 dark:text-green-400">{formatCurrency(dailyIncome)}</span>
+                            </div>
+                             <div className="flex justify-between items-center text-lg">
+                                <span className="text-slate-600 dark:text-slate-300">Total Saídas:</span>
+                                <span className="font-bold text-red-600 dark:text-red-400">{formatCurrency(dailyExpense)}</span>
+                            </div>
+                             <div className="flex justify-between items-center text-xl pt-2 border-t dark:border-slate-600">
+                                <span className="font-semibold text-slate-800 dark:text-slate-100">Saldo do Dia:</span>
+                                <span className="font-extrabold text-reviva-green">{formatCurrency(dailyBalance)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+        </div>
+    );
+};
+
+const PaymentMethodsManagement: React.FC = () => {
+    const [methods, setMethods] = useState<PaymentMethod[]>(PAYMENT_METHODS_DATA);
+    
+    const rows = methods.map(method => [
+        <span className="font-medium text-slate-800 dark:text-slate-200">{method.name}</span>,
+        method.type,
+        method.instructions,
+        <Badge variant={method.status === 'Ativo' ? 'success' : 'default'}>{method.status}</Badge>,
+        <div className="flex">
+            <Button variant="link" size="sm"><PencilIcon className="h-4 w-4 mr-1"/>Editar</Button>
+            <Button variant="link" size="sm" className="text-red-500"><TrashIcon className="h-4 w-4 mr-1"/>Remover</Button>
+        </div>
+    ]);
+
+    return (
+        <Card>
+            <div className="p-4 flex justify-between items-center">
+                <h3 className="text-lg font-semibold">Métodos de Pagamento</h3>
+                <Button><PlusIcon className="h-5 w-5 mr-2"/>Novo Método</Button>
+            </div>
+            <DataTable 
+                headers={['Nome', 'Tipo', 'Instruções', 'Status', 'Ações']}
+                rows={rows} 
+                title=""
+            />
+        </Card>
+    );
+};
+
+
 const getStatusBadge = (status: 'Pago' | 'Pendente' | 'Atrasado') => {
     switch (status) {
         case 'Pago': return <Badge variant="success">Pago</Badge>;
@@ -69,13 +155,11 @@ const getStatusBadge = (status: 'Pago' | 'Pendente' | 'Atrasado') => {
 };
 
 const TransactionLedger: React.FC<{
-    transactions: Transaction[];
-    categories: Category[];
     onEdit: (transaction: Transaction) => void;
     onDelete: (id: number) => void;
     onAdd: () => void;
-}> = ({ transactions, categories, onEdit, onDelete, onAdd }) => {
-
+}> = ({ onEdit, onDelete, onAdd }) => {
+    const { transactions, categories } = useData();
     const transactionRows = transactions.map(t => {
         const category = categories.find(c => c.id === t.categoryId);
         return [
@@ -110,11 +194,11 @@ const TransactionLedger: React.FC<{
 };
 
 const CategoryManagement: React.FC<{
-    categories: Category[];
     onEdit: (category: Category) => void;
     onDelete: (id: number) => void;
     onAdd: (type: Category['type']) => void;
-}> = ({ categories, onEdit, onDelete, onAdd }) => {
+}> = ({ onEdit, onDelete, onAdd }) => {
+    const { categories } = useData();
     const renderRows = (type: Category['type']) => {
         return categories
             .filter(c => c.type === type)
@@ -148,13 +232,13 @@ const CategoryManagement: React.FC<{
 };
 
 const ScholarshipManagement: React.FC<{
-    scholarships: Scholarship[];
     onEdit: (scholarship: Scholarship) => void;
     onDelete: (id: number) => void;
     onAdd: () => void;
-}> = ({ scholarships, onEdit, onDelete, onAdd }) => {
+}> = ({ onEdit, onDelete, onAdd }) => {
+    const { scholarships, studentScholarships } = useData();
     const studentCount = (scholarshipId: number) => {
-        return STUDENT_SCHOLARSHIPS_DATA.filter(ss => ss.scholarshipId === scholarshipId).length;
+        return studentScholarships.filter(ss => ss.scholarshipId === scholarshipId).length;
     };
     
     const scholarshipRows = scholarships.map(s => [
@@ -182,30 +266,34 @@ const ScholarshipManagement: React.FC<{
 
 
 const Financial: React.FC = () => {
+    const {
+        transactions, categories, scholarships, students, tuition, studentScholarships
+        // TODO: Add CRUD functions from context
+    } = useData();
+
     const [activeTab, setActiveTab] = useState<Tab>('dashboard');
 
     // State for transactions
-    const [transactions, setTransactions] = useState<Transaction[]>(TRANSACTIONS_DATA);
     const [isTransactionModalOpen, setTransactionModalOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
     // State for categories
-    const [categories, setCategories] = useState<Category[]>(CATEGORIES_DATA);
     const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | { type: Category['type'] } | null>(null);
 
     // State for scholarships
-    const [scholarships, setScholarships] = useState<Scholarship[]>(SCHOLARSHIPS_DATA);
     const [isScholarshipModalOpen, setScholarshipModalOpen] = useState(false);
     const [editingScholarship, setEditingScholarship] = useState<Scholarship | null>(null);
     
     const tabs: { id: Tab, label: string }[] = [
         { id: 'dashboard', label: 'Dashboard' },
         { id: 'transactions', label: 'Transações' },
+        { id: 'cashier', label: 'Caixa Diário' },
         { id: 'enrollments', label: 'Matrículas' },
         { id: 'tuition', label: 'Mensalidades' },
         { id: 'scholarships', label: 'Bolsas de Estudo' },
         { id: 'categories', label: 'Categorias' },
+        { id: 'paymentMethods', label: 'Métodos de Pagamento' },
     ];
 
     // --- Transaction Modal Logic ---
@@ -219,16 +307,13 @@ const Financial: React.FC = () => {
     };
     const handleDeleteTransaction = (id: number) => {
         if (window.confirm('Tem a certeza que deseja remover esta transação?')) {
-            setTransactions(trans => trans.filter(t => t.id !== id));
+            // setTransactions(trans => trans.filter(t => t.id !== id));
+            console.log("Delete transaction", id); // TODO: Implement in context
         }
     };
     const handleSaveTransaction = (data: Omit<Transaction, 'id'>) => {
-        if (editingTransaction) { // Editing
-            setTransactions(trans => trans.map(t => t.id === editingTransaction.id ? { ...editingTransaction, ...data } : t));
-        } else { // Adding
-            const newTransaction: Transaction = { ...data, id: Date.now() };
-            setTransactions(trans => [...trans, newTransaction]);
-        }
+        // TODO: Implement in context
+        console.log("Save transaction", data);
         setTransactionModalOpen(false);
         setEditingTransaction(null);
     };
@@ -245,22 +330,14 @@ const Financial: React.FC = () => {
     };
     const handleDeleteCategory = (id: number) => {
         if (window.confirm('Tem a certeza?')) {
-            setCategories(cats => cats.filter(c => c.id !== id));
+            // setCategories(cats => cats.filter(c => c.id !== id));
+            console.log("Delete category", id); // TODO: Implement in context
         }
     };
     const handleSaveCategory = (name: string) => {
         if (!editingCategory) return;
-        
-        if ('id' in editingCategory) { // Editing
-            setCategories(cats => cats.map(c => c.id === (editingCategory as Category).id ? { ...c, name } : c));
-        } else { // Adding
-            const newCategory: Category = {
-                id: Date.now(), // simple unique id
-                name,
-                type: editingCategory.type,
-            };
-            setCategories(cats => [...cats, newCategory]);
-        }
+        // TODO: Implement in context
+        console.log("Save category", name);
         setCategoryModalOpen(false);
         setEditingCategory(null);
     };
@@ -276,16 +353,13 @@ const Financial: React.FC = () => {
     };
     const handleDeleteScholarship = (id: number) => {
         if (window.confirm('Tem a certeza?')) {
-            setScholarships(sch => sch.filter(s => s.id !== id));
+            // setScholarships(sch => sch.filter(s => s.id !== id));
+             console.log("Delete scholarship", id); // TODO: Implement in context
         }
     };
     const handleSaveScholarship = (data: Omit<Scholarship, 'id'>) => {
-        if (editingScholarship) { // Editing
-            setScholarships(sch => sch.map(s => s.id === editingScholarship.id ? { ...s, ...data } : s));
-        } else { // Adding
-            const newScholarship: Scholarship = { ...data, id: Date.now() };
-            setScholarships(sch => [...sch, newScholarship]);
-        }
+        // TODO: Implement in context
+        console.log("Save scholarship", data);
         setScholarshipModalOpen(false);
         setEditingScholarship(null);
     };
@@ -295,30 +369,55 @@ const Financial: React.FC = () => {
             case 'dashboard':
                 return <FinancialDashboard />;
             case 'transactions':
-                return <TransactionLedger transactions={transactions} categories={categories} onAdd={handleAddTransaction} onEdit={handleEditTransaction} onDelete={handleDeleteTransaction} />;
+                return <TransactionLedger onAdd={handleAddTransaction} onEdit={handleEditTransaction} onDelete={handleDeleteTransaction} />;
+            case 'cashier':
+                return <DailyCashier transactions={transactions} categories={categories} />;
             case 'enrollments':
                 return <DataTable title="Gestão de Matrículas" headers={['Aluno', 'Data', 'Valor', 'Desconto', 'Status', 'Ações']} rows={ENROLLMENTS_DATA.map((e: Enrollment) => [e.studentName, e.date, formatCurrency(e.amount), formatCurrency(e.discount), getStatusBadge(e.status), <Button variant="link">Gerar Recibo</Button>])} />;
             case 'tuition':
-                const tuitionRows = TUITION_DATA.map((t: Tuition) => {
-                    const studentScholarship = STUDENT_SCHOLARSHIPS_DATA.find(ss => ss.studentId === t.studentId);
+                const tuitionRows = tuition.map((t: Tuition) => {
+                    const studentScholarship = studentScholarships.find(ss => ss.studentId === t.studentId);
                     const scholarship = studentScholarship ? scholarships.find(s => s.id === studentScholarship.scholarshipId) : null;
                     
-                    let discount = 0;
+                    let scholarshipDiscount = 0;
                     if (scholarship) {
                         if (scholarship.type === 'Percentagem') {
-                            discount = t.amount * (scholarship.value / 100);
+                            scholarshipDiscount = t.amount * (scholarship.value / 100);
                         } else {
-                            discount = scholarship.value;
+                            scholarshipDiscount = scholarship.value;
                         }
                     }
-                    const finalAmount = t.amount - discount;
+
+                    // Sibling discount logic
+                    const SIBLING_DISCOUNT_PERCENTAGE = 10;
+                    const currentStudent = students.find(s => s.id === t.studentId);
+                    let siblingDiscount = 0;
+                    let isSiblingDiscounted = false;
+
+                    if (currentStudent) {
+                        const siblings = students
+                            .filter(s => s.guardian === currentStudent.guardian && s.phone === currentStudent.phone)
+                            .sort((a, b) => a.id - b.id); // Sort to apply discount consistently
+                        
+                        // Apply discount to all siblings except the first one
+                        if (siblings.length > 1 && siblings[0].id !== currentStudent.id) {
+                            siblingDiscount = t.amount * (SIBLING_DISCOUNT_PERCENTAGE / 100);
+                            isSiblingDiscounted = true;
+                        }
+                    }
+                    
+                    const totalDiscount = scholarshipDiscount + siblingDiscount;
+                    const finalAmount = t.amount - totalDiscount;
 
                     return [
                         t.studentName, 
                         t.month, 
                         t.dueDate, 
                         formatCurrency(t.amount),
-                        <span className="text-orange-600 dark:text-orange-400">{formatCurrency(discount)}</span>,
+                        <span className="flex items-center">
+                          {formatCurrency(totalDiscount)}
+                          {isSiblingDiscounted && <Badge variant="warning" className="ml-2">Irmão</Badge>}
+                        </span>,
                         <span className="font-bold text-reviva-green">{formatCurrency(finalAmount)}</span>,
                         getStatusBadge(t.status), 
                         <Button variant="link" className="text-amber-600 hover:text-amber-800">Enviar Alerta</Button>
@@ -326,9 +425,11 @@ const Financial: React.FC = () => {
                 });
                  return <DataTable title="Gestão de Mensalidades" headers={['Aluno', 'Mês', 'Vencimento', 'Valor Bruto', 'Desconto', 'Valor Final', 'Status', 'Ações']} rows={tuitionRows} />;
             case 'categories':
-                return <CategoryManagement categories={categories} onAdd={handleAddCategory} onEdit={handleEditCategory} onDelete={handleDeleteCategory} />;
+                return <CategoryManagement onAdd={handleAddCategory} onEdit={handleEditCategory} onDelete={handleDeleteCategory} />;
             case 'scholarships':
-                return <ScholarshipManagement scholarships={scholarships} onAdd={handleAddScholarship} onEdit={handleEditScholarship} onDelete={handleDeleteScholarship} />;
+                return <ScholarshipManagement onAdd={handleAddScholarship} onEdit={handleEditScholarship} onDelete={handleDeleteScholarship} />;
+            case 'paymentMethods':
+                return <PaymentMethodsManagement />;
             default:
                 return null;
         }

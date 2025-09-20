@@ -2,30 +2,50 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
 import DataTable from '../components/DataTable';
-import { SUBJECTS_DATA } from '../constants';
 import { Subject } from '../types';
-import { PlusIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
+import { useData } from '../context/DataContext';
 
 const Subjects: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const { subjects, classCurriculum, deleteSubject } = useData();
 
   const filteredSubjects = useMemo(() => 
-    SUBJECTS_DATA.filter(subject =>
+    subjects.filter(subject =>
       subject.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ), [searchTerm]
+    ), [searchTerm, subjects]
   );
+  
+  const handleDelete = (subject: Subject) => {
+    const isUsed = classCurriculum.some(cc => cc.subjectId === subject.id);
+    if(isUsed) {
+        alert(`Não é possível remover a disciplina "${subject.name}" pois ela está a ser usada em uma ou mais turmas.`);
+        return;
+    }
+    if(window.confirm(`Tem a certeza que deseja remover a disciplina ${subject.name}?`)) {
+        deleteSubject(subject.id);
+    }
+  }
 
-  const actionButtons = (subjectId: number) => (
+  const actionButtons = (subject: Subject) => (
     <div className="flex">
       <Button 
         variant="link"
-        onClick={() => navigate(`/disciplinas/${subjectId}/editar`)}
-        aria-label={`Editar ${SUBJECTS_DATA.find(s => s.id === subjectId)?.name}`}
+        onClick={() => navigate(`/disciplinas/${subject.id}/editar`)}
+        aria-label={`Editar ${subject.name}`}
         >
          <PencilIcon className="h-4 w-4 mr-1"/> Editar
+      </Button>
+       <Button 
+        variant="link"
+        className="text-red-500 hover:text-red-700"
+        onClick={() => handleDelete(subject)}
+        aria-label={`Remover ${subject.name}`}
+        >
+         <TrashIcon className="h-4 w-4 mr-1"/> Remover
       </Button>
     </div>
   );
@@ -34,7 +54,7 @@ const Subjects: React.FC = () => {
     <span className="font-medium text-gray-900 dark:text-slate-100">{subject.name}</span>,
     subject.code,
     `${subject.workload} horas`,
-    actionButtons(subject.id)
+    actionButtons(subject)
   ]);
 
   return (
@@ -42,7 +62,6 @@ const Subjects: React.FC = () => {
       <PageHeader title="Gestão de Disciplinas" subtitle="Organize todas as disciplinas oferecidas pela escola">
          <div className="flex flex-col sm:flex-row items-center gap-4">
             <Input
-                // FIX: Added id prop to satisfy InputProps interface.
                 id="search-subjects"
                 type="text"
                 placeholder="Pesquisar por disciplina..."

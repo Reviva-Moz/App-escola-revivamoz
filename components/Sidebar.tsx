@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import Logo from './Logo';
-import { DashboardIcon, StudentsIcon, FinancialIcon, TeacherIcon, ClassIcon, BookIcon, CalendarIcon, ReportIcon, ActionPlanIcon, PaymentIcon, CommunicationIcon, UsersGroupIcon, SettingsIcon, LessonPlanIcon } from './icons';
+import { DashboardIcon, StudentsIcon, FinancialIcon, TeacherIcon, ClassIcon, BookIcon, CalendarIcon, ReportIcon, ActionPlanIcon, CommunicationIcon, UsersGroupIcon, SettingsIcon, LessonPlanIcon, IdentificationIcon } from './icons';
 import { XMarkIcon, Bars3Icon } from '@heroicons/react/24/solid';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
@@ -43,13 +43,14 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, disabled, onClick })
   );
 };
 
+// Permissões atualizadas com a nova estrutura de menus
 const permissions: Record<UserRole, string[]> = {
-    ADMINISTRADOR: ['/', '/alunos', '/financeiro', '/professores', '/turmas', '/disciplinas', '/biblioteca', '/plano-de-aula', '/assiduidade', '/cadernetas', '/provas', '/pagamentos', '/comunicacao', '/calendario', '/relatorios', '/recursos-humanos', '/plano-de-acao', '/configuracoes'],
-    DIRETORIA: ['/', '/alunos', '/financeiro', '/professores', '/turmas', '/disciplinas', '/biblioteca', '/plano-de-aula', '/assiduidade', '/cadernetas', '/provas', '/pagamentos', '/comunicacao', '/calendario', '/relatorios', '/recursos-humanos'],
-    SECRETARIA: ['/', '/alunos', '/professores', '/turmas', '/disciplinas', '/biblioteca', '/assiduidade', '/cadernetas', '/provas', '/comunicacao', '/calendario', '/relatorios', '/recursos-humanos'],
-    PROFESSOR: ['/turmas', '/plano-de-aula', '/assiduidade', '/cadernetas', '/provas', '/comunicacao', '/calendario'],
-    RESPONSAVEL: ['/portal-aluno/1', '/pagamentos', '/comunicacao', '/calendario'], // Assumindo ID 1 para demonstração
-    ALUNO: ['/portal-aluno/1', '/comunicacao', '/calendario'], // Assumindo ID 1 para demonstração
+    ADMINISTRADOR: ['/', '/alunos', '/professores', '/turmas', '/disciplinas', '/colaboradores', '/financeiro', '/plano-de-aula', '/assiduidade', '/cadernetas', '/provas', '/biblioteca', '/comunicacao', '/calendario', '/relatorios', '/plano-de-acao', '/configuracoes'],
+    DIRETORIA: ['/', '/alunos', '/professores', '/turmas', '/disciplinas', '/colaboradores', '/financeiro', '/plano-de-aula', '/assiduidade', '/cadernetas', '/provas', '/biblioteca', '/comunicacao', '/calendario', '/relatorios', '/configuracoes'],
+    SECRETARIA: ['/', '/alunos', '/professores', '/turmas', '/disciplinas', '/colaboradores', '/assiduidade', '/cadernetas', '/biblioteca', '/comunicacao', '/calendario', '/relatorios'],
+    PROFESSOR: ['/', '/turmas', '/plano-de-aula', '/assiduidade', '/cadernetas', '/provas', '/comunicacao', '/calendario'],
+    RESPONSAVEL: ['/'],
+    ALUNO: ['/'],
 };
 
 
@@ -57,6 +58,10 @@ const Sidebar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { user } = useAuth();
   const userPermissions = user ? permissions[user.role] : [];
+  
+  // A rota principal para ALUNO/RESPONSAVEL é o dashboard, que funciona como portal.
+  const mainDashboardPath = user?.role === 'ALUNO' || user?.role === 'RESPONSAVEL' ? '/' : '/';
+
 
   const hasAccess = (path: string) => userPermissions.includes(path);
 
@@ -80,39 +85,36 @@ const Sidebar: React.FC = () => {
            <Logo />
          </div>
          <nav className="flex-1 px-4 pb-4 overflow-y-auto">
-          { (hasAccess('/') || hasAccess('/alunos') || hasAccess('/financeiro')) &&
+          { (hasAccess('/') || hasAccess('/financeiro')) &&
             <p className="px-3 pt-2 pb-1 text-xs text-gray-400 font-semibold uppercase">Principal</p>
           }
-          { hasAccess('/') && <NavItem to="/" icon={<DashboardIcon />} label="Dashboard Principal" onClick={closeSidebar} /> }
-          { hasAccess('/alunos') && <NavItem to="/alunos" icon={<StudentsIcon />} label="Gestão de Alunos" onClick={closeSidebar} /> }
-          {/* Rota especial para Responsável/Aluno */}
-          { (hasAccess('/portal-aluno/1')) && <NavItem to="/portal-aluno/1" icon={<StudentsIcon />} label="Portal do Aluno" onClick={closeSidebar} /> }
+          { hasAccess('/') && <NavItem to={mainDashboardPath} icon={<DashboardIcon />} label="Dashboard" onClick={closeSidebar} /> }
           { hasAccess('/financeiro') && <NavItem to="/financeiro" icon={<FinancialIcon />} label="Sistema Financeiro" onClick={closeSidebar} /> }
           
-          { (hasAccess('/professores') || hasAccess('/turmas') || hasAccess('/disciplinas') || hasAccess('/biblioteca') || hasAccess('/plano-de-aula')) &&
-            <p className="px-3 pt-4 pb-1 text-xs text-gray-400 font-semibold uppercase">Gestão Acadêmica</p>
+          { (hasAccess('/alunos') || hasAccess('/professores') || hasAccess('/turmas') || hasAccess('/disciplinas') || hasAccess('/colaboradores')) &&
+             <p className="px-3 pt-4 pb-1 text-xs text-gray-400 font-semibold uppercase">Cadastros</p>
           }
+          { hasAccess('/alunos') && <NavItem to="/alunos" icon={<StudentsIcon />} label="Alunos" onClick={closeSidebar} /> }
           { hasAccess('/professores') && <NavItem to="/professores" icon={<TeacherIcon />} label="Professores" onClick={closeSidebar} /> }
           { hasAccess('/turmas') && <NavItem to="/turmas" icon={<ClassIcon />} label="Turmas" onClick={closeSidebar} /> }
           { hasAccess('/disciplinas') && <NavItem to="/disciplinas" icon={<BookIcon />} label="Disciplinas" onClick={closeSidebar} /> }
-          { hasAccess('/plano-de-aula') && <NavItem to="/plano-de-aula" icon={<LessonPlanIcon />} label="Plano de Aula" onClick={closeSidebar} /> }
-          { hasAccess('/biblioteca') && <NavItem to="/biblioteca" icon={<BookIcon />} label="Biblioteca" onClick={closeSidebar} /> }
+          { hasAccess('/colaboradores') && <NavItem to="/colaboradores" icon={<UsersGroupIcon />} label="Colaboradores" onClick={closeSidebar} /> }
 
-          { (hasAccess('/assiduidade') || hasAccess('/cadernetas') || hasAccess('/provas') || hasAccess('/pagamentos') || hasAccess('/comunicacao')) &&
-            <p className="px-3 pt-4 pb-1 text-xs text-gray-400 font-semibold uppercase">Operações Diárias</p>
+          { (hasAccess('/plano-de-aula') || hasAccess('/assiduidade') || hasAccess('/cadernetas') || hasAccess('/provas')) &&
+            <p className="px-3 pt-4 pb-1 text-xs text-gray-400 font-semibold uppercase">Gestão Académica</p>
           }
+          { hasAccess('/plano-de-aula') && <NavItem to="/plano-de-aula" icon={<LessonPlanIcon />} label="Plano de Aula" onClick={closeSidebar} /> }
           { hasAccess('/assiduidade') && <NavItem to="/assiduidade" icon={<CalendarIcon />} label="Assiduidade" onClick={closeSidebar} /> }
-          { hasAccess('/cadernetas') && <NavItem to="/cadernetas" icon={<BookIcon />} label="Lançamento de Notas" onClick={closeSidebar} /> }
+          { hasAccess('/cadernetas') && <NavItem to="/cadernetas" icon={<IdentificationIcon />} label="Lançamento de Notas" onClick={closeSidebar} /> }
           { hasAccess('/provas') && <NavItem to="/provas" icon={<CalendarIcon />} label="Calendário de Provas" onClick={closeSidebar} /> }
-          { hasAccess('/pagamentos') && <NavItem to="/pagamentos" icon={<PaymentIcon />} label="Pagamentos" onClick={closeSidebar} /> }
-          { hasAccess('/comunicacao') && <NavItem to="/comunicacao" icon={<CommunicationIcon />} label="Comunicação" onClick={closeSidebar} /> }
 
-          { (hasAccess('/calendario') || hasAccess('/relatorios') || hasAccess('/recursos-humanos') || hasAccess('/plano-de-acao') || hasAccess('/configuracoes')) &&
+          { (hasAccess('/biblioteca') || hasAccess('/comunicacao') || hasAccess('/calendario') || hasAccess('/relatorios') || hasAccess('/plano-de-acao') || hasAccess('/configuracoes')) &&
             <p className="px-3 pt-4 pb-1 text-xs text-gray-400 font-semibold uppercase">Administrativo</p>
           }
+          { hasAccess('/biblioteca') && <NavItem to="/biblioteca" icon={<BookIcon />} label="Biblioteca" onClick={closeSidebar} /> }
+          { hasAccess('/comunicacao') && <NavItem to="/comunicacao" icon={<CommunicationIcon />} label="Comunicação" onClick={closeSidebar} /> }
           { hasAccess('/calendario') && <NavItem to="/calendario" icon={<CalendarIcon />} label="Calendário Escolar" onClick={closeSidebar} /> }
           { hasAccess('/relatorios') && <NavItem to="/relatorios" icon={<ReportIcon />} label="Relatórios" onClick={closeSidebar} /> }
-          { hasAccess('/recursos-humanos') && <NavItem to="/recursos-humanos" icon={<UsersGroupIcon />} label="Recursos Humanos" onClick={closeSidebar} /> }
           { hasAccess('/configuracoes') && <NavItem to="/configuracoes" icon={<SettingsIcon />} label="Configurações" onClick={closeSidebar} /> }
           { hasAccess('/plano-de-acao') && <NavItem to="/plano-de-acao" icon={<ActionPlanIcon />} label="Plano de Ação" onClick={closeSidebar} /> }
         </nav>

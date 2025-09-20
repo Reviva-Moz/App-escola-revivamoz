@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/Button';
-import { CameraIcon, ArrowPathIcon, UserCircleIcon } from '@heroicons/react/24/outline';
+import { CameraIcon, ArrowUpTrayIcon, UserCircleIcon } from '@heroicons/react/24/outline';
 
 interface WebcamCaptureProps {
   onCapture: (imageDataUrl: string) => void;
@@ -12,6 +12,7 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, initialImage }
   const [image, setImage] = useState<string | null>(initialImage || null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
@@ -19,6 +20,7 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, initialImage }
   }, [initialImage]);
 
   const startCamera = async () => {
+    stopCamera(); // Stop any existing stream
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
       streamRef.current = stream;
@@ -55,11 +57,28 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, initialImage }
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const dataUrl = reader.result as string;
+        setImage(dataUrl);
+        onCapture(dataUrl);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="w-64 h-48 bg-slate-200 dark:bg-slate-700 rounded-lg flex items-center justify-center overflow-hidden">
         {image && !isStreaming && (
-           <img src={image} alt="Foto do Aluno" className="w-full h-full object-cover" />
+           <img src={image} alt="Foto de perfil" className="w-full h-full object-cover" />
         )}
         {!image && !isStreaming && (
             <UserCircleIcon className="w-24 h-24 text-slate-400 dark:text-slate-500" />
@@ -69,11 +88,17 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, initialImage }
         )}
       </div>
        <canvas ref={canvasRef} style={{ display: 'none' }} />
+       <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
 
       {!isStreaming && (
-        <Button type="button" variant="secondary" onClick={startCamera}>
-          <CameraIcon className="h-5 w-5 mr-2" /> {image ? 'Tirar Nova Foto' : 'Abrir Câmera'}
-        </Button>
+        <div className="flex flex-col gap-2 w-full">
+            <Button type="button" variant="secondary" onClick={startCamera}>
+                <CameraIcon className="h-5 w-5 mr-2" /> {image ? 'Tirar Nova Foto' : 'Abrir Câmera'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={triggerFileUpload}>
+                <ArrowUpTrayIcon className="h-5 w-5 mr-2" /> Carregar Foto
+            </Button>
+        </div>
       )}
 
       {isStreaming && (

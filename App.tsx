@@ -6,7 +6,6 @@ import Layout from './components/Layout';
 import Dashboard from './screens/Dashboard';
 import Students from './screens/Students';
 import Financial from './screens/Financial';
-import ComingSoon from './screens/ComingSoon';
 import Login from './screens/Login';
 import StudentForm from './screens/StudentForm';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -23,12 +22,11 @@ import Calendar from './screens/Calendar';
 import Reports from './screens/Reports';
 import ProvaCalendar from './screens/ProvaCalendar';
 import ActionPlan from './screens/ActionPlan';
-import Payments from './screens/Payments';
-import StudentPortal from './screens/StudentPortal';
+import StudentDashboard from './screens/dashboards/StudentDashboard';
 import Communication from './screens/Communication';
 import Library from './screens/Library';
-import HR from './screens/HR';
-import StaffForm from './screens/StaffForm';
+import Collaborators from './screens/Collaborators';
+import CollaboratorForm from './screens/CollaboratorForm';
 import LessonPlan from './screens/LessonPlan';
 import Settings from './screens/Settings';
 
@@ -45,13 +43,11 @@ const App: React.FC = () => {
             <Layout>
               <Routes>
                 <Route path="/" element={<Dashboard />} />
+                
+                {/* Cadastros */}
                 <Route path="/alunos" element={<Students />} />
                 <Route path="/alunos/novo" element={<StudentForm />} />
                 <Route path="/alunos/:id/editar" element={<StudentForm />} />
-                <Route path="/portal-aluno/:id" element={<StudentPortal />} />
-                <Route path="/financeiro" element={<Financial />} />
-                
-                {/* Rotas da Fase 2 */}
                 <Route path="/professores" element={<Teachers />} />
                 <Route path="/professores/novo" element={<TeacherForm />} />
                 <Route path="/professores/:id/editar" element={<TeacherForm />} />
@@ -62,22 +58,29 @@ const App: React.FC = () => {
                 <Route path="/disciplinas" element={<Subjects />} />
                 <Route path="/disciplinas/novo" element={<SubjectForm />} />
                 <Route path="/disciplinas/:id/editar" element={<SubjectForm />} />
-                <Route path="/biblioteca" element={<Library />} />
+                <Route path="/colaboradores" element={<Collaborators />} />
+                <Route path="/colaboradores/novo" element={<CollaboratorForm />} />
+                <Route path="/colaboradores/:id/editar" element={<CollaboratorForm />} />
+
+                {/* Portal Aluno/Responsável agora é um dashboard */}
+                <Route path="/portal-aluno/:id" element={<StudentDashboard />} />
+
+                {/* Financeiro */}
+                <Route path="/financeiro" element={<Financial />} />
+                
+                {/* Gestão Académica */}
                 <Route path="/plano-de-aula" element={<LessonPlan />} />
-
-
-                {/* Rotas da Fase 3 */}
                 <Route path="/assiduidade" element={<Attendance />} />
                 <Route path="/cadernetas" element={<Grades />} />
                 <Route path="/provas" element={<ProvaCalendar />} />
-                <Route path="/pagamentos" element={<Payments />} />
+
+                {/* Operações Diárias (movidos) */}
                 <Route path="/comunicacao" element={<Communication />} />
 
+                {/* Administrativo */}
+                <Route path="/biblioteca" element={<Library />} />
                 <Route path="/calendario" element={<Calendar />} />
                 <Route path="/relatorios" element={<Reports />} />
-                <Route path="/recursos-humanos" element={<HR />} />
-                <Route path="/recursos-humanos/novo" element={<StaffForm />} />
-                <Route path="/recursos-humanos/:id/editar" element={<StaffForm />} />
                 <Route path="/plano-de-acao" element={<ActionPlan />} />
                 <Route path="/configuracoes" element={<Settings />} />
               </Routes>

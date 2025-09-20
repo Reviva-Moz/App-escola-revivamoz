@@ -25,56 +25,55 @@ const phases = [
   },
   {
     title: 'Fase 1.1: Aprimoramentos e Adaptação Local',
-    status: 'Em Progresso',
-    variant: 'warning' as const,
+    status: 'Concluído',
+    variant: 'success' as const,
     features: [
       { name: 'Adicionar campo NUIT nos cadastros de Alunos e Pessoal', done: true },
       { name: 'Adicionar Ficha de Saúde Básica no cadastro de Alunos', done: true },
       { name: 'Capturar foto do aluno via webcam/telemóvel no cadastro', done: true },
       { name: 'Permitir registo de pagamentos em dinheiro físico (Tesouraria)', done: true },
-      { name: "Implementar 'Caixa Diário' para controlo de entradas/saídas em dinheiro", done: false },
-      { name: 'Implementar lógica de desconto automático para irmãos', done: false },
-      { name: 'Adicionar campo de "Observações Qualitativas" no lançamento de notas', done: false },
-      { name: 'Adicionar assinatura digital nos boletins', done: false },
+      { name: "Implementar 'Caixa Diário' para controlo de entradas/saídas em dinheiro", done: true },
+      { name: 'Adicionar campo de "Observações Qualitativas" no lançamento de notas', done: true },
+      { name: 'Implementar lógica de desconto automático para irmãos', done: true },
+      { name: 'Adicionar assinatura digital nos boletins', done: true },
     ]
   },
   {
     title: 'Fase 1.2: Funcionalidades para Professores',
-    status: 'A Fazer',
-    variant: 'warning' as const,
+    status: 'Concluído',
+    variant: 'success' as const,
     features: [
-      { name: 'Módulo de Plano de Aula (Criar, editar e consultar)', done: false },
-      { name: 'Calendário Pessoal do Professor (Visão própria no calendário)', done: false },
+      { name: 'Módulo de Plano de Aula (Criar, editar e consultar) com Assistente de IA', done: true },
+      { name: 'Calendário Pessoal do Professor (Visão própria no calendário)', done: true },
     ]
   },
   {
     title: 'Fase 1.3: Administração e Configuração do Sistema',
-    status: 'A Fazer',
-    variant: 'warning' as const,
+    status: 'Concluído',
+    variant: 'success' as const,
     features: [
-      { name: 'Módulo de Gestão de Utilizadores (CRUD de contas e perfis)', done: false },
-      { name: 'Módulo de Configurações do Sistema (Dados da escola, ano letivo, etc.)', done: false },
-      { name: 'Reset de senhas de utilizadores pelo Administrador', done: false },
+      { name: 'Módulo de Gestão de Utilizadores (CRUD de contas e perfis)', done: true },
+      { name: 'Módulo de Configurações do Sistema (Dados da escola, ano letivo, etc.)', done: true },
+      { name: 'Reset de senhas de utilizadores pelo Administrador', done: true },
     ]
   },
   {
     title: 'Fase 1.4: Expansão de Módulos',
-    status: 'A Fazer',
-    variant: 'warning' as const,
+    status: 'Concluído',
+    variant: 'success' as const,
     features: [
-      { name: 'Módulo de Gestão de Saúde Simplificada (Ocorrências)', done: false },
-      { name: "Evoluir módulo de Comunicação para um 'Mural Digital' mais robusto", done: false },
+      { name: 'Módulo de Gestão de Saúde Simplificada (Ocorrências)', done: true },
+      { name: "Evoluir módulo de Comunicação para um 'Mural Digital' mais robusto", done: true },
     ]
   },
   {
     title: 'MVP 2: Futuras Evoluções',
-    status: 'Planeado',
-    variant: 'default' as const,
+    status: 'A Fazer',
+    variant: 'warning' as const,
     features: [
       { name: 'Implementar arquitetura Offline-First para resiliência de conexão', done: false },
       { name: 'Integração com pagamentos móveis (M-Pesa, e-Mola)', done: false },
       { name: 'Envio de alertas e notificações por SMS', done: false },
-      { name: 'Assistente de IA para elaboração de Planos de Aula', done: false },
       { name: 'Relatórios académicos preditivos (Risco de evasão, etc.)', done: false },
       { name: 'Aplicação móvel dedicada (PWA ou Nativa)', done: false },
     ]

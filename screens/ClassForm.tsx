@@ -1,17 +1,19 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
 import { ArrowLeftIcon, UserGroupIcon } from '@heroicons/react/24/outline';
-import { TEACHERS_DATA, CLASSES_DATA } from '../constants';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
+import { useData } from '../context/DataContext';
 
 const ClassForm: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { classes, teachers, addClass, updateClass } = useData();
     const isEditing = Boolean(id);
 
     const [className, setClassName] = useState('');
@@ -20,28 +22,33 @@ const ClassForm: React.FC = () => {
 
     useEffect(() => {
         if (isEditing && id) {
-            const classData = CLASSES_DATA.find(c => c.id === parseInt(id));
+            const classData = classes.find(c => c.id === parseInt(id));
             if (classData) {
                 setClassName(classData.name);
                 setYear(classData.year);
                 setTeacherId(classData.teacherId?.toString() || '');
             }
         }
-    }, [id, isEditing]);
+    }, [id, isEditing, classes]);
 
     const title = isEditing ? 'Editar Turma' : 'Criar Nova Turma';
     const subtitle = isEditing ? 'Atualize os detalhes da turma' : 'Preencha os dados para criar uma nova turma';
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // In a real app, this would dispatch an action or call an API
-        // to save the data. For this demo, we'll just log it.
-        console.log('Form submitted:', {
-            id: id ? parseInt(id) : 'new',
+        
+        const classData = {
             name: className,
             year,
             teacherId: teacherId ? parseInt(teacherId) : null,
-        });
+        }
+
+        if (isEditing && id) {
+            updateClass({id: parseInt(id), ...classData });
+        } else {
+            addClass(classData);
+        }
+        
         navigate('/turmas');
     };
 
@@ -76,7 +83,7 @@ const ClassForm: React.FC = () => {
                             onChange={(e) => setTeacherId(e.target.value)}
                         >
                             <option value="">Selecione um professor</option>
-                            {TEACHERS_DATA.filter(t => t.status === 'Ativo').map(teacher => (
+                            {teachers.filter(t => t.status === 'Ativo').map(teacher => (
                                 <option key={teacher.id} value={teacher.id}>{teacher.name}</option>
                             ))}
                         </Select>

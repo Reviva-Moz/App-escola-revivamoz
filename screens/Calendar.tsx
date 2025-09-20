@@ -1,8 +1,8 @@
 
 
-import React, { useState, useMemo, FC } from 'react';
+import React, { useState, useMemo, FC, useEffect } from 'react';
 import { CalendarEvent } from '../types';
-import { CALENDAR_EVENTS_DATA } from '../constants';
+import { CALENDAR_EVENTS_DATA, CLASS_CURRICULUM_DATA, CLASSES_DATA, SUBJECTS_DATA, LESSON_PLANS_DATA } from '../constants';
 import PageHeader from '../components/Header';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -10,12 +10,14 @@ import { Input } from '../components/ui/Input';
 import { Badge } from '../components/ui/Badge';
 import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import { Select } from '../components/ui/Select';
+import { useAuth } from '../context/AuthContext';
 
 const eventTypeClasses: { [key in CalendarEvent['type']]: string } = {
     Feriado: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 border-red-300 dark:border-red-500/50',
     Evento: 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-500/50',
     Prova: 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-500/50',
     Prazo: 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 border-indigo-300 dark:border-indigo-500/50',
+    'Plano de Aula': 'bg-teal-100 dark:bg-teal-900/50 text-teal-800 dark:text-teal-300 border-teal-300 dark:border-teal-500/50',
 };
 
 const eventTypeDotClasses: { [key in CalendarEvent['type']]: string } = {
@@ -23,6 +25,7 @@ const eventTypeDotClasses: { [key in CalendarEvent['type']]: string } = {
     Evento: 'bg-blue-500',
     Prova: 'bg-yellow-500',
     Prazo: 'bg-indigo-500',
+    'Plano de Aula': 'bg-teal-500',
 };
 
 
@@ -85,7 +88,7 @@ const EventModal: FC<{
                         </div>
                         <div className="flex justify-between items-center pt-4">
                            <div>
-                            {event?.id && (
+                            {event?.id && event.type !== 'Plano de Aula' && (
                                 <Button type="button" variant="secondary" onClick={() => onDelete(event.id!)} className="text-red-600 hover:bg-red-100 dark:hover:bg-red-900/50">
                                     <TrashIcon className="h-5 w-5 mr-2" />
                                     Remover
@@ -104,15 +107,116 @@ const EventModal: FC<{
     );
 };
 
+const CalendarWeeklyView: FC<{ currentDate: Date, events: CalendarEvent[], onEditEvent: (event: CalendarEvent) => void }> = ({ currentDate, events, onEditEvent }) => {
+    const weekDays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+
+    const days = Array.from({ length: 7 }).map((_, i) => {
+        const day = new Date(startOfWeek);
+        day.setDate(startOfWeek.getDate() + i);
+        return day;
+    });
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-px bg-slate-200 dark:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+            {days.map((day, index) => {
+                const dayEvents = events
+                    .filter(e => e.date === day.toISOString().split('T')[0])
+                    .sort((a,b) => (a.type === 'Plano de Aula' ? -1 : 1)); // Show plans first
+                const isToday = day.toDateString() === new Date().toDateString();
+
+                return (
+                    <div key={index} className="bg-white dark:bg-slate-800 p-2 min-h-[200px]">
+                        <p className={`font-semibold text-center ${isToday ? 'text-reviva-green' : 'text-slate-700 dark:text-slate-300'}`}>
+                            {weekDays[day.getDay()]}
+                        </p>
+                        <p className={`text-center text-sm mb-2 ${isToday ? 'text-reviva-green' : 'text-slate-500 dark:text-slate-400'}`}>
+                            {day.getDate()}
+                        </p>
+                        <div className="space-y-2">
+                            {dayEvents.map(event => (
+                                <button key={event.id} onClick={() => onEditEvent(event)} className={`w-full text-left p-2 rounded-md text-xs border-l-4 ${eventTypeClasses[event.type]} transition-transform hover:scale-105`}>
+                                    <p className="font-bold">{event.title}</p>
+                                    <p className="opacity-80">{CLASSES_DATA.find(c => c.id === event.classId)?.name}</p>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
 
 const Calendar: React.FC = () => {
+    const { user } = useAuth();
+    const isTeacher = user?.role === 'PROFESSOR';
+    const TEACHER_ID = 1; // Demo teacher ID (Carlos Neto)
+
     const [currentDate, setCurrentDate] = useState(new Date());
     const [events, setEvents] = useState<CalendarEvent[]>(CALENDAR_EVENTS_DATA);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<Partial<CalendarEvent> | null>(null);
+    const [view, setView] = useState<'month' | 'week'>('month');
+
+    useEffect(() => {
+        if (isTeacher) {
+            setView('week');
+        }
+    }, [isTeacher]);
 
     const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
     const lastDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+    const filteredEvents = useMemo(() => {
+        let allEvents: CalendarEvent[] = [];
+
+        // --- Process original calendar events ---
+        if (isTeacher) {
+            const teacherClassIds = Array.from(new Set(
+                CLASS_CURRICULUM_DATA
+                    .filter(c => c.teacherId === TEACHER_ID)
+                    .map(c => c.classId)
+            ));
+            
+            const calendarEventsForTeacher = events.filter(event => {
+                if (event.type !== 'Prova') return true;
+                return event.classId ? teacherClassIds.includes(event.classId) : false;
+            });
+            allEvents = allEvents.concat(calendarEventsForTeacher);
+        } else {
+            allEvents = allEvents.concat(events);
+        }
+
+        // --- Process and add lesson plans for teacher ---
+        if (isTeacher) {
+            const teacherLessonPlans: CalendarEvent[] = LESSON_PLANS_DATA
+                .map(plan => {
+                    const curriculumEntry = CLASS_CURRICULUM_DATA.find(
+                        c => c.classId === plan.classId && c.subjectId === plan.subjectId
+                    );
+                    return { ...plan, teacherId: curriculumEntry?.teacherId };
+                })
+                .filter(plan => plan.teacherId === TEACHER_ID)
+                .map(plan => ({
+                    id: plan.id + 1000, // Avoid ID collision
+                    title: plan.title,
+                    date: plan.date,
+                    type: 'Plano de Aula',
+                    description: `Aula de ${SUBJECTS_DATA.find(s => s.id === plan.subjectId)?.name || ''} para ${CLASSES_DATA.find(c => c.id === plan.classId)?.name || ''}`,
+                    createdAt: new Date().toISOString(), // dummy date
+                    classId: plan.classId,
+                    subjectId: plan.subjectId,
+                }));
+            
+            allEvents = allEvents.concat(teacherLessonPlans);
+        }
+        
+        return allEvents;
+    }, [events, isTeacher]);
 
     const daysInMonth = useMemo(() => {
         const days = [];
@@ -130,12 +234,24 @@ const Calendar: React.FC = () => {
         return days;
     }, [currentDate]);
 
-    const handlePrevMonth = () => {
-        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    const handlePrev = () => {
+        if (view === 'month') {
+            setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+        } else {
+            const newDate = new Date(currentDate);
+            newDate.setDate(currentDate.getDate() - 7);
+            setCurrentDate(newDate);
+        }
     };
 
-    const handleNextMonth = () => {
-        setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    const handleNext = () => {
+        if (view === 'month') {
+            setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+        } else {
+            const newDate = new Date(currentDate);
+            newDate.setDate(currentDate.getDate() + 7);
+            setCurrentDate(newDate);
+        }
     };
 
     const handleAddEvent = () => {
@@ -144,6 +260,11 @@ const Calendar: React.FC = () => {
     };
 
     const handleEditEvent = (event: CalendarEvent) => {
+        if (event.type === 'Plano de Aula') {
+            // Future enhancement: navigate to lesson plan editor
+            alert(`Visualizando detalhes do plano de aula:\n\n${event.title}\n${event.description}`);
+            return;
+        }
         setSelectedEvent(event);
         setIsModalOpen(true);
     };
@@ -155,13 +276,11 @@ const Calendar: React.FC = () => {
 
     const handleSaveEvent = (eventData: Omit<CalendarEvent, 'id' | 'createdAt'> & { id?: number }) => {
         if (eventData.id) {
-            // Edit existing event
             setEvents(events.map(e => e.id === eventData.id ? { ...e, ...eventData } : e));
         } else {
-            // Add new event
             const newEvent: CalendarEvent = {
                 ...eventData,
-                id: Math.max(0, ...events.map(e => e.id)) + 1, // simple ID generation
+                id: Math.max(0, ...events.map(e => e.id)) + 1,
                 createdAt: new Date().toISOString(),
             };
             setEvents([...events, newEvent]);
@@ -176,68 +295,109 @@ const Calendar: React.FC = () => {
         }
     };
     
-    const eventsThisMonth = events.filter(e => {
+    const eventsThisMonth = filteredEvents.filter(e => {
         const eventDate = new Date(e.date);
         return eventDate.getFullYear() === currentDate.getFullYear() && eventDate.getMonth() === currentDate.getMonth();
     }).sort((a,b) => new Date(a.date).getDate() - new Date(b.date).getDate());
 
+    const pageTitle = isTeacher ? "Meu Calendário Pessoal" : "Calendário Escolar";
+    const pageSubtitle = isTeacher ? "Agenda semanal com planos de aula, eventos e provas" : "Organize eventos, feriados e prazos importantes";
+    
+    const getCalendarTitle = () => {
+        if (view === 'month') {
+            return currentDate.toLocaleString('pt-MZ', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase());
+        }
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        return `${startOfWeek.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short' })} - ${endOfWeek.toLocaleDateString('pt-MZ', { day: '2-digit', month: 'short', year: 'numeric' })}`;
+    };
 
     return (
         <>
-            <PageHeader title="Calendário Escolar" subtitle="Organize eventos, feriados e prazos importantes">
-                <Button onClick={handleAddEvent}>
-                    <PlusIcon className="h-5 w-5 mr-2" />
-                    Adicionar Evento
-                </Button>
+            <PageHeader title={pageTitle} subtitle={pageSubtitle}>
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                    <div className="inline-flex rounded-md shadow-sm" role="group">
+                        <Button
+                            onClick={() => setView('week')}
+                            variant={view === 'week' ? 'primary' : 'secondary'}
+                            className="rounded-r-none"
+                        >
+                            Vista Semanal
+                        </Button>
+                        <Button
+                            onClick={() => setView('month')}
+                            variant={view === 'month' ? 'primary' : 'secondary'}
+                            className="rounded-l-none"
+                        >
+                            Vista Mensal
+                        </Button>
+                    </div>
+                    {!isTeacher && (
+                         <Button onClick={handleAddEvent}>
+                            <PlusIcon className="h-5 w-5 mr-2" />
+                            Adicionar Evento
+                        </Button>
+                    )}
+                </div>
             </PageHeader>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <Card className="lg:col-span-2">
-                    <div className="p-4 flex justify-between items-center border-b dark:border-slate-700">
-                        <Button variant="ghost" size="icon" onClick={handlePrevMonth} aria-label="Mês anterior">
-                            <ChevronLeftIcon className="h-6 w-6" />
-                        </Button>
-                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">
-                            {currentDate.toLocaleString('pt-MZ', { month: 'long', year: 'numeric' }).replace(/^\w/, c => c.toUpperCase())}
-                        </h2>
-                        <Button variant="ghost" size="icon" onClick={handleNextMonth} aria-label="Próximo mês">
-                            <ChevronRightIcon className="h-6 w-6" />
-                        </Button>
-                    </div>
-                    <div className="grid grid-cols-7 text-center font-semibold text-slate-600 dark:text-slate-400 border-b dark:border-slate-700">
-                        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
-                            <div key={day} className="py-2">{day}</div>
-                        ))}
-                    </div>
-                    <div className="grid grid-cols-7">
-                        {daysInMonth.map((day, index) => {
-                             const isToday = day && day.toDateString() === new Date().toDateString();
-                             const dayEvents = day ? events.filter(e => e.date === day.toISOString().split('T')[0]) : [];
-
-                            return (
-                                <div key={index} className="h-24 sm:h-28 border-r border-b border-slate-200 dark:border-slate-700 p-1 flex flex-col overflow-hidden">
-                                     {day ? (
-                                        <>
-                                            <span className={`text-sm font-medium ${isToday ? 'bg-reviva-green text-white rounded-full h-6 w-6 flex items-center justify-center' : 'text-slate-800 dark:text-slate-200'}`}>
-                                                {day.getDate()}
-                                            </span>
-                                            <div className="mt-1 space-y-1 overflow-y-auto text-slate-700 dark:text-slate-300">
-                                                {dayEvents.map(event => (
-                                                    <button key={event.id} onClick={() => handleEditEvent(event)} className="w-full text-left hover:opacity-75">
-                                                        <div className="flex items-center text-xs">
-                                                            <span className={`w-2 h-2 rounded-full mr-1.5 flex-shrink-0 ${eventTypeDotClasses[event.type]}`}></span>
-                                                            <span className="truncate">{event.title}</span>
-                                                        </div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </>
-                                    ) : null}
+                <div className="lg:col-span-2">
+                     <Card>
+                        <div className="p-4 flex justify-between items-center border-b dark:border-slate-700">
+                            <Button variant="ghost" size="icon" onClick={handlePrev} aria-label="Anterior">
+                                <ChevronLeftIcon className="h-6 w-6" />
+                            </Button>
+                            <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200 text-center">
+                                {getCalendarTitle()}
+                            </h2>
+                            <Button variant="ghost" size="icon" onClick={handleNext} aria-label="Próximo">
+                                <ChevronRightIcon className="h-6 w-6" />
+                            </Button>
+                        </div>
+                        {view === 'week' ? (
+                           <CalendarWeeklyView currentDate={currentDate} events={filteredEvents} onEditEvent={handleEditEvent}/>
+                        ) : (
+                            <>
+                                <div className="grid grid-cols-7 text-center font-semibold text-slate-600 dark:text-slate-400 border-b dark:border-slate-700">
+                                    {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+                                        <div key={day} className="py-2">{day}</div>
+                                    ))}
                                 </div>
-                            )
-                        })}
-                    </div>
-                </Card>
+                                <div className="grid grid-cols-7">
+                                    {daysInMonth.map((day, index) => {
+                                        const isToday = day && day.toDateString() === new Date().toDateString();
+                                        const dayEvents = day ? filteredEvents.filter(e => e.date === day.toISOString().split('T')[0]) : [];
+
+                                        return (
+                                            <div key={index} className="h-24 sm:h-28 border-r border-b border-slate-200 dark:border-slate-700 p-1 flex flex-col overflow-hidden">
+                                                {day ? (
+                                                    <>
+                                                        <span className={`text-sm font-medium ${isToday ? 'bg-reviva-green text-white rounded-full h-6 w-6 flex items-center justify-center' : 'text-slate-800 dark:text-slate-200'}`}>
+                                                            {day.getDate()}
+                                                        </span>
+                                                        <div className="mt-1 space-y-1 overflow-y-auto text-slate-700 dark:text-slate-300">
+                                                            {dayEvents.map(event => (
+                                                                <button key={event.id} onClick={() => handleEditEvent(event)} className="w-full text-left hover:opacity-75">
+                                                                    <div className="flex items-center text-xs">
+                                                                        <span className={`w-2 h-2 rounded-full mr-1.5 flex-shrink-0 ${eventTypeDotClasses[event.type]}`}></span>
+                                                                        <span className="truncate">{event.title}</span>
+                                                                    </div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </>
+                                                ) : null}
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                             </>
+                        )}
+                    </Card>
+                </div>
 
                 <Card>
                      <div className="p-4 border-b dark:border-slate-700">
@@ -252,9 +412,11 @@ const Calendar: React.FC = () => {
                                         <p className="text-sm opacity-80">{event.description}</p>
                                         <Badge variant="default" className="mt-2">{event.type}</Badge>
                                     </div>
+                                    {event.type !== 'Plano de Aula' &&
                                     <Button variant="ghost" size="icon" onClick={() => handleEditEvent(event)} className="flex-shrink-0 ml-2 -mt-1 -mr-1 opacity-70 hover:opacity-100">
                                         <PencilIcon className="h-4 w-4" />
                                     </Button>
+                                    }
                                 </div>
                             </div>
                         )) : <p className="text-slate-500 dark:text-slate-400 text-center py-4">Nenhum evento para este mês.</p>}

@@ -6,16 +6,16 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
-import { supabase } from '../utils/supabase';
-import { Class } from '../types';
-import { CLASSES_DATA, STUDENTS_DATA } from '../constants';
 import WebcamCapture from '../components/WebcamCapture';
+import { useData } from '../context/DataContext';
 
 const StudentForm: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const isEditing = Boolean(id);
     
+    const { students, classes } = useData(); // TODO: Add update/add functions
+
     // Form state
     const [name, setName] = useState('');
     const [classId, setClassId] = useState('');
@@ -27,75 +27,28 @@ const StudentForm: React.FC = () => {
     const [healthNotes, setHealthNotes] = useState('');
     const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
 
-    const [classes, setClasses] = useState<Pick<Class, 'id' | 'name'>[]>([]);
     const [loading, setLoading] = useState(true);
     const [formError, setFormError] = useState<string | null>(null);
 
     useEffect(() => {
-        // Fetch classes for the dropdown
-        const fetchClasses = async () => {
-            if (supabase) {
-                const { data, error } = await supabase.from('classes').select('id, name');
-                if (error) {
-                    console.error("Error fetching classes", error);
-                    setClasses(CLASSES_DATA); // Fallback on error
-                } else {
-                    setClasses(data as any);
-                }
+        if (isEditing && id) {
+            const studentData = students.find(s => s.id === parseInt(id));
+            if (studentData) {
+                setName(studentData.name);
+                setClassId(studentData.classId.toString());
+                setAge(studentData.age.toString());
+                setGuardian(studentData.guardian);
+                setPhone(studentData.phone);
+                setStatus(studentData.status);
+                setNuit(studentData.nuit || '');
+                setHealthNotes(studentData.healthNotes || '');
+                setPhotoDataUrl(studentData.photoUrl || null);
             } else {
-                setClasses(CLASSES_DATA); // Fallback if supabase is not configured
+                 setFormError("Não foi possível encontrar os dados do aluno.");
             }
-        };
-
-        const fetchStudentData = async () => {
-            if (isEditing && id) {
-                setLoading(true);
-                if (supabase) {
-                    const { data, error } = await supabase
-                        .from('students')
-                        .select('*')
-                        .eq('id', id)
-                        .single();
-
-                    if (error) {
-                        console.error('Error fetching student data:', error);
-                        setFormError("Não foi possível carregar os dados do aluno.");
-                    } else if (data) {
-                        setName(data.name);
-                        setClassId(data.class_id?.toString() || '');
-                        setAge(data.age?.toString() || '');
-                        setGuardian(data.guardian || '');
-                        setPhone(data.phone || '');
-                        setStatus(data.status || 'Ativo');
-                        setNuit(data.nuit || '');
-                        setHealthNotes(data.health_notes || '');
-                        setPhotoDataUrl(data.photo_url || null);
-                    }
-                } else {
-                    // Fallback for student data
-                    const mockStudent = STUDENTS_DATA.find(s => s.id === parseInt(id));
-                    if (mockStudent) {
-                         setName(mockStudent.name);
-                         setClassId(mockStudent.classId.toString());
-                         setAge(mockStudent.age.toString());
-                         setGuardian(mockStudent.guardian);
-                         setPhone(mockStudent.phone);
-                         setStatus(mockStudent.status);
-                         setNuit(mockStudent.nuit || '');
-                         setHealthNotes(mockStudent.healthNotes || '');
-                         setPhotoDataUrl(mockStudent.photoUrl || null);
-                    }
-                }
-                setLoading(false);
-            } else {
-                setLoading(false);
-            }
-        };
-
-        fetchClasses();
-        fetchStudentData();
-
-    }, [id, isEditing]);
+        }
+        setLoading(false);
+    }, [id, isEditing, students]);
 
     const title = isEditing ? 'Editar Aluno' : 'Cadastrar Novo Aluno';
     const subtitle = isEditing ? 'Atualize as informações do aluno' : 'Preencha os dados para criar um novo registo';
@@ -108,42 +61,11 @@ const StudentForm: React.FC = () => {
             setFormError("Nome e Turma são campos obrigatórios.");
             return;
         }
-
-        if (supabase) {
-            const studentData = {
-                name,
-                class_id: parseInt(classId),
-                age: age ? parseInt(age) : null,
-                guardian,
-                phone,
-                status,
-                nuit: nuit || null,
-                health_notes: healthNotes || null,
-                // In a real app, you would upload the photoDataUrl to Supabase Storage
-                // and save the returned URL here. For now, we save a placeholder.
-                photo_url: photoDataUrl ? (isEditing && id && photoDataUrl.startsWith('http') ? photoDataUrl : `photos/student_${id || Date.now()}.jpg`) : null,
-            };
-
-            if (photoDataUrl && !photoDataUrl.startsWith('http')) {
-              console.log("Simulando upload da foto para o Supabase Storage...");
-              // Here you would implement the actual upload logic.
-            }
-
-            const { error } = isEditing
-                ? await supabase.from('students').update(studentData).eq('id', id)
-                : await supabase.from('students').insert([studentData]);
-
-            if (error) {
-                console.error('Error saving student:', error);
-                setFormError(`Erro ao salvar: ${error.message}`);
-            } else {
-                navigate('/alunos');
-            }
-        } else {
-            console.warn("Supabase not configured. Simulating save.");
-            console.log("Submitted Data:", { name, classId, age, guardian, phone, status, nuit, healthNotes, photoDataUrl });
-            navigate('/alunos');
-        }
+        
+        // TODO: Call context function
+        console.warn("Save functionality not fully implemented in context yet.");
+        console.log("Submitted Data:", { name, classId, age, guardian, phone, status, nuit, healthNotes, photoDataUrl });
+        navigate('/alunos');
     };
 
     if (loading) {

@@ -7,6 +7,13 @@ export interface User {
   role: UserRole;
 }
 
+export interface UserAccount {
+  id: number;
+  email: string;
+  role: UserRole;
+  lastLogin: string;
+}
+
 export interface Student {
   id: number;
   name: string;
@@ -28,6 +35,7 @@ export interface Teacher {
     phone: string;
     qualifications: string;
     status: 'Ativo' | 'Inativo';
+    photoUrl?: string;
 }
 
 export interface Staff {
@@ -64,7 +72,7 @@ export interface ClassCurriculum {
 }
 
 export interface FinancialCategory {
-  name: string;
+  name:string;
   amount: number;
   color: string;
 }
@@ -92,6 +100,7 @@ export interface GradeRecord {
   nota1: number | string;
   nota2: number | string;
   finalExam: number | string;
+  observations?: string;
 }
 
 export interface StudentGrades {
@@ -105,7 +114,7 @@ export interface CalendarEvent {
   id: number;
   title: string;
   date: string; // YYYY-MM-DD
-  type: 'Feriado' | 'Evento' | 'Prova' | 'Prazo';
+  type: 'Feriado' | 'Evento' | 'Prova' | 'Prazo' | 'Plano de Aula';
   description?: string;
   createdAt: string; // ISO string date
   classId?: number;
@@ -140,12 +149,17 @@ export interface Transaction {
   paymentMethod?: 'Dinheiro' | 'Transferência' | 'Digital';
 }
 
+export type AnnouncementCategory = 'Informativo' | 'Urgente' | 'Evento';
+
 export interface Announcement {
   id: number;
   title: string;
   content: string;
   target: 'Todos' | 'Professores' | 'Pais' | string; // string for specific class
+  category: AnnouncementCategory;
   date: string; // ISO string date
+  attachments?: { name: string }[];
+  readBy?: number[];
 }
 
 export interface Book {
@@ -165,4 +179,81 @@ export interface BookLoan {
   dueDate: string; // YYYY-MM-DD
   returnDate?: string; // YYYY-MM-DD
   status: 'Em Dia' | 'Atrasado' | 'Devolvido';
+}
+
+export interface LessonPlan {
+  id: number;
+  classId: number;
+  subjectId: number;
+  title: string;
+  date: string; // YYYY-MM-DD
+  objectives: string;
+  content: string;
+  resources: string;
+}
+
+export interface SystemSettings {
+  schoolName: string;
+  address: string;
+  phone: string;
+  email: string;
+  currentAcademicYear: number;
+  defaultTuition: number;
+}
+
+export interface HealthRecord {
+  id: number;
+  studentId: number;
+  date: string; // YYYY-MM-DD
+  description: string;
+  actionTaken: string;
+  recordedBy: string; // Name of staff member
+}
+
+export interface PaymentMethod {
+  id: number;
+  name: string;
+  type: 'Digital' | 'Físico';
+  instructions: string;
+  status: 'Ativo' | 'Inativo';
+}
+
+export interface DataContextType {
+  students: Student[];
+  teachers: Teacher[];
+  staff: Staff[];
+  subjects: Subject[];
+  classes: Class[];
+  transactions: Transaction[];
+  categories: Category[];
+  scholarships: Scholarship[];
+  announcements: Announcement[];
+  books: Book[];
+  bookLoans: BookLoan[];
+  lessonPlans: LessonPlan[];
+  systemSettings: SystemSettings;
+  users: UserAccount[];
+  healthRecords: HealthRecord[];
+  grades: StudentGrades[];
+  calendarEvents: CalendarEvent[];
+  classCurriculum: ClassCurriculum[];
+  studentScholarships: StudentScholarship[];
+  tuition: Tuition[];
+  // CRUD functions
+  addTeacher: (teacher: Omit<Teacher, 'id'>) => void;
+  updateTeacher: (teacher: Teacher) => void;
+  deleteTeacher: (id: number) => void;
+  addStaff: (staffMember: Omit<Staff, 'id'>) => void;
+  updateStaff: (staffMember: Staff) => void;
+  deleteStaff: (id: number) => void;
+  addClass: (classData: Omit<Class, 'id'| 'teacherName' | 'studentCount'>) => void;
+  updateClass: (classData: Omit<Class, 'teacherName' | 'studentCount'>) => void;
+  deleteClass: (id: number) => void;
+  addSubject: (subject: Omit<Subject, 'id'>) => void;
+  updateSubject: (subject: Subject) => void;
+  deleteSubject: (id: number) => void;
+  updateSettings: (settings: SystemSettings) => void;
+  addUser: (user: Omit<UserAccount, 'id'|'lastLogin'>) => void;
+  updateUser: (user: UserAccount) => void;
+  deleteUser: (id: number) => void;
 }

@@ -1,22 +1,25 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
 import { ArrowLeftIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ClassCurriculum } from '../types';
-import { CLASSES_DATA, SUBJECTS_DATA, TEACHERS_DATA, CLASS_CURRICULUM_DATA } from '../constants';
+import { useData } from '../context/DataContext';
 
 const ClassDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const classId = parseInt(id || '0');
+    const { classes, subjects, teachers, classCurriculum } = useData(); // TODO: Add update functions
 
-    const classInfo = useMemo(() => CLASSES_DATA.find(c => c.id === classId), [classId]);
+    const classInfo = useMemo(() => classes.find(c => c.id === classId), [classId, classes]);
 
-    const [curriculum, setCurriculum] = useState<ClassCurriculum[]>(
-        CLASS_CURRICULUM_DATA.filter(c => c.classId === classId)
-    );
+    const [currentCurriculum, setCurrentCurriculum] = useState<ClassCurriculum[]>([]);
+    useEffect(() => {
+        setCurrentCurriculum(classCurriculum.filter(c => c.classId === classId));
+    }, [classId, classCurriculum]);
+    
     const [selectedSubject, setSelectedSubject] = useState('');
     const [selectedTeacher, setSelectedTeacher] = useState('');
 
@@ -33,36 +36,36 @@ const ClassDetails: React.FC = () => {
             teacherId: parseInt(selectedTeacher),
         };
 
-        // Prevent adding duplicates
-        if (curriculum.some(item => item.subjectId === newEntry.subjectId)) {
+        if (currentCurriculum.some(item => item.subjectId === newEntry.subjectId)) {
             alert('Esta disciplina já foi adicionada a esta turma.');
             return;
         }
 
-        setCurriculum([...curriculum, newEntry]);
-        // Reset form
+        // TODO: Call context function to update curriculum
+        setCurrentCurriculum([...currentCurriculum, newEntry]);
         setSelectedSubject('');
         setSelectedTeacher('');
     };
 
     const handleRemove = (subjectIdToRemove: number) => {
         if (window.confirm('Tem a certeza que deseja remover esta disciplina do plano da turma?')) {
-            setCurriculum(curriculum.filter(item => item.subjectId !== subjectIdToRemove));
+            // TODO: Call context function to update curriculum
+            setCurrentCurriculum(currentCurriculum.filter(item => item.subjectId !== subjectIdToRemove));
         }
     };
 
     const availableSubjects = useMemo(() => {
-        const assignedSubjectIds = curriculum.map(c => c.subjectId);
-        return SUBJECTS_DATA.filter(s => !assignedSubjectIds.includes(s.id));
-    }, [curriculum]);
+        const assignedSubjectIds = currentCurriculum.map(c => c.subjectId);
+        return subjects.filter(s => !assignedSubjectIds.includes(s.id));
+    }, [currentCurriculum, subjects]);
 
     if (!classInfo) {
         return <div>Turma não encontrada.</div>;
     }
 
-    const curriculumDetails = curriculum.map(item => {
-        const subject = SUBJECTS_DATA.find(s => s.id === item.subjectId);
-        const teacher = TEACHERS_DATA.find(t => t.id === item.teacherId);
+    const curriculumDetails = currentCurriculum.map(item => {
+        const subject = subjects.find(s => s.id === item.subjectId);
+        const teacher = teachers.find(t => t.id === item.teacherId);
         return { ...item, subjectName: subject?.name, teacherName: teacher?.name };
     });
 
@@ -131,7 +134,7 @@ const ClassDetails: React.FC = () => {
                                     <label htmlFor="teacher" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Professor</label>
                                     <select id="teacher" value={selectedTeacher} onChange={e => setSelectedTeacher(e.target.value)} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg bg-white" required>
                                         <option value="">Selecione...</option>
-                                        {TEACHERS_DATA.filter(t => t.status === 'Ativo').map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                        {teachers.filter(t => t.status === 'Ativo').map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                     </select>
                                 </div>
                             </div>

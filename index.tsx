@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
+import { DataProvider } from './context/DataContext';
 import { ThemeProvider } from './context/ThemeContext';
 
 const rootElement = document.getElementById('root');
@@ -16,7 +17,9 @@ root.render(
     <HashRouter>
       <ThemeProvider>
         <AuthProvider>
-          <App />
+          <DataProvider>
+            <App />
+          </DataProvider>
         </AuthProvider>
       </ThemeProvider>
     </HashRouter>

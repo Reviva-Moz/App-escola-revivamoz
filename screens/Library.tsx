@@ -1,8 +1,8 @@
 
+
 import React, { useState, useMemo } from 'react';
 import PageHeader from '../components/Header';
 import DataTable from '../components/DataTable';
-import { BOOKS_DATA, BOOK_LOANS_DATA, STUDENTS_DATA } from '../constants';
 import { Book, BookLoan } from '../types';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
@@ -10,13 +10,13 @@ import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { PlusIcon } from '@heroicons/react/24/outline';
+import { useData } from '../context/DataContext';
 
 type Tab = 'catalog' | 'loans';
 
 const Library: React.FC = () => {
+    const { books, bookLoans, students } = useData(); // TODO: Add CRUD functions
     const [activeTab, setActiveTab] = useState<Tab>('catalog');
-    const [books, setBooks] = useState<Book[]>(BOOKS_DATA);
-    const [loans, setLoans] = useState<BookLoan[]>(BOOK_LOANS_DATA);
 
     // Modal States
     const [isBookModalOpen, setBookModalOpen] = useState(false);
@@ -27,12 +27,8 @@ const Library: React.FC = () => {
     const [newLoan, setNewLoan] = useState<Omit<BookLoan, 'id'|'status'>>({ bookId: 0, studentId: 0, loanDate: new Date().toISOString().split('T')[0], dueDate: '' });
     
     const handleSaveBook = () => {
-        const bookToAdd: Book = {
-            ...newBook,
-            id: Date.now(),
-            availableStock: newBook.totalStock,
-        };
-        setBooks(prev => [...prev, bookToAdd]);
+        // TODO: Call context function
+        console.log("Save book", newBook);
         setBookModalOpen(false);
         setNewBook({ title: '', author: '', isbn: '', totalStock: 1 });
     };
@@ -42,14 +38,8 @@ const Library: React.FC = () => {
             alert("Preencha todos os campos.");
             return;
         }
-        const loanToAdd: BookLoan = {
-            ...newLoan,
-            id: Date.now(),
-            status: 'Em Dia'
-        };
-        setLoans(prev => [...prev, loanToAdd]);
-        // Update available stock
-        setBooks(prevBooks => prevBooks.map(b => b.id === newLoan.bookId ? { ...b, availableStock: b.availableStock - 1 } : b));
+        // TODO: Call context function
+        console.log("Save loan", newLoan);
         setLoanModalOpen(false);
         setNewLoan({ bookId: 0, studentId: 0, loanDate: new Date().toISOString().split('T')[0], dueDate: '' });
     };
@@ -71,9 +61,9 @@ const Library: React.FC = () => {
         }
     };
 
-    const loanRows = loans.map(loan => {
+    const loanRows = bookLoans.map(loan => {
         const book = books.find(b => b.id === loan.bookId);
-        const student = STUDENTS_DATA.find(s => s.id === loan.studentId);
+        const student = students.find(s => s.id === loan.studentId);
         return [
             <span className="font-medium text-gray-900 dark:text-gray-200">{book?.title || 'Livro não encontrado'}</span>,
             student?.name || 'Aluno não encontrado',
@@ -144,7 +134,7 @@ const Library: React.FC = () => {
                     </Select>
                      <Select id="loan-student" label="Aluno" value={newLoan.studentId} onChange={e => setNewLoan({...newLoan, studentId: parseInt(e.target.value)})} required>
                          <option value="">Selecione um aluno</option>
-                         {STUDENTS_DATA.filter(s => s.status === 'Ativo').map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                         {students.filter(s => s.status === 'Ativo').map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                     </Select>
                     <Input id="due-date" label="Data de Devolução" type="date" value={newLoan.dueDate} onChange={e => setNewLoan({...newLoan, dueDate: e.target.value})} required/>
                      <div className="flex justify-end gap-4 pt-4">
