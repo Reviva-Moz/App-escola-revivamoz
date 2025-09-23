@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
+import Logo from '../components/Logo';
 
 const USERS: Record<string, { password: string; role: UserRole }> = {
     'admin@reviva.mz': { password: '123456', role: 'ADMINISTRADOR' },
@@ -39,15 +40,7 @@ const Login: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-100 dark:bg-slate-900 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-                <h1 className="text-4xl font-extrabold text-reviva-green dark:text-reviva-green-light">
-                    Escola Reviva
-                </h1>
-                <p className="text-md font-medium text-slate-900 dark:text-white mt-2">
-                    SGE - Sistema de Gestão Escolar
-                </p>
-                <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
-                    Acesse o sistema
-                </h2>
+                <Logo />
             </div>
 
             <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">

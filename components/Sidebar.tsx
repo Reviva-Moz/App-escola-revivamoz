@@ -1,6 +1,6 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import Logo from './Logo';
 import { DashboardIcon, StudentsIcon, FinancialIcon, TeacherIcon, ClassIcon, BookIcon, CalendarIcon, ReportIcon, ActionPlanIcon, CommunicationIcon, UsersGroupIcon, SettingsIcon, LessonPlanIcon, IdentificationIcon } from './icons';
@@ -67,20 +67,48 @@ const Sidebar: React.FC = () => {
 
   const closeSidebar = () => setIsOpen(false);
 
+  // Fecha o Drawer ao pressionar a tecla Escape para melhor acessibilidade
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape') {
+            closeSidebar();
+        }
+    };
+
+    if (isOpen) {
+        document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen]);
+
   return (
     <>
       {/* Mobile Header */}
-      <div className="md:hidden flex justify-between items-center bg-reviva-dark text-white p-4 w-full fixed top-0 left-0 z-30 shadow-lg">
+      <div className="md:hidden flex justify-between items-center bg-reviva-dark text-white p-4 w-full fixed top-0 left-0 z-40 shadow-lg">
          <h1 className="text-lg font-bold">Escola Reviva</h1>
-         <button onClick={() => setIsOpen(!isOpen)} className="text-white focus:outline-none z-40">
+         <button onClick={() => setIsOpen(!isOpen)} className="text-white focus:outline-none z-50">
             {isOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
          </button>
       </div>
 
-      {/* Sidebar */}
-      <aside className={`bg-reviva-dark text-white flex-shrink-0 flex flex-col fixed md:relative h-full z-20 transform
-                       transition-transform duration-300 ease-in-out w-64
-                       ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+      {/* Drawer Overlay */}
+      <div 
+        className={`fixed inset-0 bg-black z-30 md:hidden transition-opacity duration-300 ${isOpen ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
+        onClick={closeSidebar}
+        aria-hidden="true"
+      ></div>
+
+      {/* Sidebar (Drawer em mobile, Fixo em desktop) */}
+      <aside 
+        className={`bg-reviva-dark text-white flex-shrink-0 flex flex-col fixed md:relative h-full z-50 md:z-20 transform
+                       transition-transform duration-300 ease-in-out w-64 shadow-2xl md:shadow-none
+                       ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+        role={isOpen ? "dialog" : undefined}
+        aria-modal={isOpen ? "true" : undefined}
+      >
          <div className="flex-shrink-0">
            <Logo />
          </div>
@@ -119,9 +147,9 @@ const Sidebar: React.FC = () => {
           { hasAccess('/plano-de-acao') && <NavItem to="/plano-de-acao" icon={<ActionPlanIcon />} label="Plano de Ação" onClick={closeSidebar} /> }
         </nav>
       </aside>
-       {/* Overlay for mobile */}
-       {isOpen && <div className="fixed inset-0 bg-black opacity-50 z-10 md:hidden" onClick={closeSidebar}></div>}
-       {/* Spacer for mobile view */}
+       {/* O antigo overlay foi removido e integrado na nova lógica do Drawer */}
+       
+       {/* Spacer for mobile view - empurra o conteúdo para baixo do header fixo */}
        <div className="md:hidden h-16 w-full flex-shrink-0"></div>
     </>
   );

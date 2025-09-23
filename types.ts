@@ -19,9 +19,15 @@ export interface Student {
   name: string;
   class: string;
   classId: number;
-  age: number;
+  age: number; // Mantido para retrocompatibilidade, mas formulário usará birthDate
+  birthDate?: string;
+  gender?: 'Masculino' | 'Feminino' | 'Outro';
+  idNumber?: string; // BI
+  email?: string;
+  address?: string;
+  studentPhone?: string;
   guardian: string;
-  phone: string;
+  phone: string; // Telefone do Encarregado
   status: 'Ativo' | 'Inativo';
   nuit?: string;
   healthNotes?: string;
@@ -63,6 +69,9 @@ export interface Class {
     teacherId: number | null;
     teacherName: string;
     studentCount: number;
+    className?: string; // Ex: "10ª Classe"
+    room?: string; // Ex: "Sala 101"
+    maxCapacity?: number;
 }
 
 export interface ClassCurriculum {
