@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/Button';
 import { CameraIcon, ArrowUpTrayIcon, UserCircleIcon } from '@heroicons/react/24/outline';
@@ -6,6 +7,10 @@ interface WebcamCaptureProps {
   onCapture: (imageDataUrl: string) => void;
   initialImage?: string | null;
 }
+
+const MAX_WIDTH = 640;
+const MAX_HEIGHT = 480;
+const IMAGE_QUALITY = 0.8; // 80% quality JPEG
 
 const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, initialImage }) => {
   const [isStreaming, setIsStreaming] = useState(false);
@@ -22,7 +27,7 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, initialImage }
   const startCamera = async () => {
     stopCamera(); // Stop any existing stream
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } } });
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -46,10 +51,22 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, initialImage }
     if (videoRef.current && canvasRef.current) {
       const context = canvasRef.current.getContext('2d');
       if (context) {
-        canvasRef.current.width = videoRef.current.videoWidth;
-        canvasRef.current.height = videoRef.current.videoHeight;
-        context.drawImage(videoRef.current, 0, 0, videoRef.current.videoWidth, videoRef.current.videoHeight);
-        const dataUrl = canvasRef.current.toDataURL('image/jpeg');
+        let { videoWidth, videoHeight } = videoRef.current;
+        let ratio = videoWidth / videoHeight;
+        
+        let newWidth = MAX_WIDTH;
+        let newHeight = newWidth / ratio;
+
+        if (newHeight > MAX_HEIGHT) {
+            newHeight = MAX_HEIGHT;
+            newWidth = newHeight * ratio;
+        }
+
+        canvasRef.current.width = newWidth;
+        canvasRef.current.height = newHeight;
+        context.drawImage(videoRef.current, 0, 0, newWidth, newHeight);
+        
+        const dataUrl = canvasRef.current.toDataURL('image/jpeg', IMAGE_QUALITY);
         setImage(dataUrl);
         onCapture(dataUrl);
         stopCamera();
@@ -61,10 +78,32 @@ const WebcamCapture: React.FC<WebcamCaptureProps> = ({ onCapture, initialImage }
     const file = event.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const dataUrl = reader.result as string;
-        setImage(dataUrl);
-        onCapture(dataUrl);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = canvasRef.current;
+            const context = canvas?.getContext('2d');
+            if(canvas && context) {
+                let { width, height } = img;
+                let ratio = width / height;
+
+                let newWidth = MAX_WIDTH;
+                let newHeight = newWidth / ratio;
+                if (newHeight > MAX_HEIGHT) {
+                    newHeight = MAX_HEIGHT;
+                    newWidth = newHeight * ratio;
+                }
+                
+                canvas.width = newWidth;
+                canvas.height = newHeight;
+                context.drawImage(img, 0, 0, newWidth, newHeight);
+
+                const dataUrl = canvas.toDataURL('image/jpeg', IMAGE_QUALITY);
+                setImage(dataUrl);
+                onCapture(dataUrl);
+            }
+        };
+        img.src = e.target?.result as string;
       };
       reader.readAsDataURL(file);
     }

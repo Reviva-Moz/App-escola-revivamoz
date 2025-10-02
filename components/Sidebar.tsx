@@ -1,10 +1,11 @@
 
 
-import React, { useState, useEffect } from 'react';
+
+import React, { useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import Logo from './Logo';
 import { DashboardIcon, StudentsIcon, FinancialIcon, TeacherIcon, ClassIcon, BookIcon, CalendarIcon, ReportIcon, ActionPlanIcon, CommunicationIcon, UsersGroupIcon, SettingsIcon, LessonPlanIcon, IdentificationIcon } from './icons';
-import { XMarkIcon, Bars3Icon } from '@heroicons/react/24/solid';
+import { XMarkIcon } from '@heroicons/react/24/solid';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 
@@ -45,7 +46,7 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, disabled, onClick })
 
 // Permissões atualizadas com a nova estrutura de menus
 const permissions: Record<UserRole, string[]> = {
-    ADMINISTRADOR: ['/', '/alunos', '/professores', '/turmas', '/disciplinas', '/colaboradores', '/financeiro', '/plano-de-aula', '/assiduidade', '/cadernetas', '/provas', '/biblioteca', '/comunicacao', '/calendario', '/relatorios', '/plano-de-acao', '/configuracoes'],
+    ADMINISTRADOR: ['/', '/alunos', '/professores', '/turmas', '/disciplinas', '/colaboradores', '/financeiro', '/plano-de-aula', '/assiduidade', '/cadernetas', '/provas', '/biblioteca', '/comunicacao', '/calendario', '/relatorios', '/plano-de-acao', '/configuracoes', '/configuracoes/assistente-ia'],
     DIRETORIA: ['/', '/alunos', '/professores', '/turmas', '/disciplinas', '/colaboradores', '/financeiro', '/plano-de-aula', '/assiduidade', '/cadernetas', '/provas', '/biblioteca', '/comunicacao', '/calendario', '/relatorios', '/configuracoes'],
     SECRETARIA: ['/', '/alunos', '/professores', '/turmas', '/disciplinas', '/colaboradores', '/assiduidade', '/cadernetas', '/biblioteca', '/comunicacao', '/calendario', '/relatorios'],
     PROFESSOR: ['/', '/turmas', '/plano-de-aula', '/assiduidade', '/cadernetas', '/provas', '/comunicacao', '/calendario'],
@@ -53,9 +54,12 @@ const permissions: Record<UserRole, string[]> = {
     ALUNO: ['/'],
 };
 
+interface SidebarProps {
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
+}
 
-const Sidebar: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
   const { user } = useAuth();
   const userPermissions = user ? permissions[user.role] : [];
   
@@ -86,32 +90,27 @@ const Sidebar: React.FC = () => {
 
   return (
     <>
-      {/* Mobile Header */}
-      <div className="md:hidden flex justify-between items-center bg-reviva-dark text-white p-4 w-full fixed top-0 left-0 z-40 shadow-lg">
-         <h1 className="text-lg font-bold">Escola Reviva</h1>
-         <button onClick={() => setIsOpen(!isOpen)} className="text-white focus:outline-none z-50">
-            {isOpen ? <XMarkIcon className="w-6 h-6" /> : <Bars3Icon className="w-6 h-6" />}
-         </button>
-      </div>
-
       {/* Drawer Overlay */}
       <div 
-        className={`fixed inset-0 bg-black z-30 md:hidden transition-opacity duration-300 ${isOpen ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
+        className={`fixed inset-0 bg-black z-40 md:hidden transition-opacity duration-300 ${isOpen ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
         onClick={closeSidebar}
         aria-hidden="true"
       ></div>
 
       {/* Sidebar (Drawer em mobile, Fixo em desktop) */}
       <aside 
-        className={`bg-reviva-dark text-white flex-shrink-0 flex flex-col fixed md:relative h-full z-50 md:z-20 transform
+        className={`bg-reviva-dark text-white flex-shrink-0 flex flex-col fixed md:relative h-full z-50
                        transition-transform duration-300 ease-in-out w-64 shadow-2xl md:shadow-none
                        ${isOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
         role={isOpen ? "dialog" : undefined}
         aria-modal={isOpen ? "true" : undefined}
       >
-         <div className="flex-shrink-0">
-           <Logo />
-         </div>
+        <div className="flex-shrink-0 flex items-center justify-between">
+          <Logo />
+           <button onClick={closeSidebar} className="md:hidden text-white focus:outline-none p-4" aria-label="Fechar menu">
+            <XMarkIcon className="w-6 h-6" />
+          </button>
+        </div>
          <nav className="flex-1 px-4 pb-4 overflow-y-auto">
           { (hasAccess('/') || hasAccess('/financeiro')) &&
             <p className="px-3 pt-2 pb-1 text-xs text-gray-400 font-semibold uppercase">Principal</p>
@@ -147,10 +146,6 @@ const Sidebar: React.FC = () => {
           { hasAccess('/plano-de-acao') && <NavItem to="/plano-de-acao" icon={<ActionPlanIcon />} label="Plano de Ação" onClick={closeSidebar} /> }
         </nav>
       </aside>
-       {/* O antigo overlay foi removido e integrado na nova lógica do Drawer */}
-       
-       {/* Spacer for mobile view - empurra o conteúdo para baixo do header fixo */}
-       <div className="md:hidden h-16 w-full flex-shrink-0"></div>
     </>
   );
 };

@@ -43,7 +43,7 @@ const phases = [
     status: 'Concluído',
     variant: 'success' as const,
     features: [
-      { name: 'Módulo de Plano de Aula (Criar, editar e consultar) com Assistente de IA', done: true },
+      { name: 'Módulo de Plano de Aula com Assistente de IA configurável pelo Admin', done: true },
       { name: 'Calendário Pessoal do Professor (Visão própria no calendário)', done: true },
     ]
   },
@@ -68,13 +68,18 @@ const phases = [
   },
   {
     title: 'MVP 2: Futuras Evoluções',
-    status: 'A Fazer',
+    status: 'Em Progresso',
     variant: 'warning' as const,
     features: [
-      { name: 'Implementar arquitetura Offline-First para resiliência de conexão', done: false },
+      { name: 'Relatórios académicos preditivos com IA (Risco de evasão, etc.)', done: true },
+      { name: 'Fluxo de cobrança automatizado no Kanban (arrastar para enviar)', done: true },
+      { name: 'Agendamento de lembretes de cobrança', done: true },
+      { name: 'Gestão de modelos de mensagem com atalhos', done: true },
+      { name: 'Conectar interface ao backend para envio real via API (Evolution, SMS)', done: true },
+      { name: 'Implementar arquitetura Offline-First (Leitura de dados e cache de assets)', done: true },
+      { name: 'Implementar Políticas de Segurança de Dados a nível de Base de Dados (RLS)', done: true },
+      { name: 'Implementar sincronização de dados offline (Escrita)', done: false },
       { name: 'Integração com pagamentos móveis (M-Pesa, e-Mola)', done: false },
-      { name: 'Envio de alertas e notificações por SMS', done: false },
-      { name: 'Relatórios académicos preditivos (Risco de evasão, etc.)', done: false },
       { name: 'Aplicação móvel dedicada (PWA ou Nativa)', done: false },
     ]
   },

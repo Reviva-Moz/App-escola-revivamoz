@@ -1,0 +1,20 @@
+{
+  "short_name": "SGE Reviva",
+  "name": "Sistema de Gestão Escolar - Escola Reviva",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#387a3d",
+  "background_color": "#f8fafc"
+}

@@ -1,14 +1,16 @@
 
 
+
 import React, { useState, useMemo, FC, useEffect } from 'react';
-import { CalendarEvent } from '../types';
-import { CALENDAR_EVENTS_DATA, CLASSES_DATA, SUBJECTS_DATA } from '../constants';
+import { CalendarEvent, Class, Subject } from '../types';
 import PageHeader from '../components/Header';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/solid';
+import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 
 
 const ProvaModal: FC<{
@@ -18,11 +20,44 @@ const ProvaModal: FC<{
     onSave: (event: Omit<CalendarEvent, 'id' | 'createdAt' | 'type'> & { id?: number }) => void;
     onDelete: (id: number) => void;
 }> = ({ event, isOpen, onClose, onSave, onDelete }) => {
+    const { classes, subjects, teachers, classCurriculum } = useData();
+    const { user } = useAuth();
+
     const [title, setTitle] = useState('');
     const [date, setDate] = useState('');
     const [classId, setClassId] = useState<string>('');
     const [subjectId, setSubjectId] = useState<string>('');
     const [description, setDescription] = useState('');
+
+    const loggedInTeacher = useMemo(() => {
+        if (user?.role !== 'PROFESSOR') return null;
+        return teachers.find(t => t.email.toLowerCase() === user.email.toLowerCase());
+    }, [user, teachers]);
+
+    const teacherCurriculum = useMemo(() => {
+        if (!loggedInTeacher) return [];
+        return classCurriculum.filter(cc => cc.teacherId === loggedInTeacher.id);
+    }, [loggedInTeacher, classCurriculum]);
+
+    const classesToDisplay = useMemo(() => {
+        if (loggedInTeacher) {
+            const teacherClassIds = new Set(teacherCurriculum.map(cc => cc.classId));
+            return classes.filter(c => teacherClassIds.has(c.id));
+        }
+        return classes;
+    }, [loggedInTeacher, teacherCurriculum, classes]);
+
+    const subjectsForClass = useMemo(() => {
+        if (!classId) return [];
+        if (loggedInTeacher) {
+            const teacherSubjectIds = teacherCurriculum
+                .filter(cc => cc.classId === parseInt(classId))
+                .map(cc => cc.subjectId);
+            return subjects.filter(subject => teacherSubjectIds.includes(subject.id));
+        }
+        const curriculumForClass = classCurriculum.filter(c => c.classId === parseInt(classId));
+        return subjects.filter(subject => curriculumForClass.some(c => c.subjectId === subject.id));
+    }, [classId, subjects, classCurriculum, loggedInTeacher, teacherCurriculum]);
 
     useEffect(() => {
         if (event) {
@@ -33,6 +68,14 @@ const ProvaModal: FC<{
             setDescription(event.description || '');
         }
     }, [event, isOpen]);
+
+    useEffect(() => {
+        // Reset subject if it's not valid for the selected class
+        if (!subjectsForClass.some(s => s.id.toString() === subjectId)) {
+            setSubjectId('');
+        }
+    }, [classId, subjectsForClass, subjectId]);
+
 
     if (!isOpen) return null;
 
@@ -57,11 +100,11 @@ const ProvaModal: FC<{
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <Select id="class" label="Turma" value={classId} onChange={e => setClassId(e.target.value)} required>
                                 <option value="">Selecione a turma</option>
-                                {CLASSES_DATA.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                {classesToDisplay.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                             </Select>
-                             <Select id="subject" label="Disciplina" value={subjectId} onChange={e => setSubjectId(e.target.value)} required>
+                             <Select id="subject" label="Disciplina" value={subjectId} onChange={e => setSubjectId(e.target.value)} required disabled={!classId}>
                                 <option value="">Selecione a disciplina</option>
-                                {SUBJECTS_DATA.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                {subjectsForClass.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                             </Select>
                         </div>
                         <div>
@@ -91,8 +134,9 @@ const ProvaModal: FC<{
 
 
 const ProvaCalendar: React.FC = () => {
+    const { calendarEvents: initialEvents } = useData();
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [events, setEvents] = useState<CalendarEvent[]>(CALENDAR_EVENTS_DATA);
+    const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<Partial<CalendarEvent> | null>(null);
 
@@ -132,6 +176,7 @@ const ProvaCalendar: React.FC = () => {
     };
 
     const handleSaveEvent = (eventData: Omit<CalendarEvent, 'id' | 'createdAt' | 'type'> & { id?: number }) => {
+        const { classes } = useData();
         const fullEventData = { ...eventData, type: 'Prova' as const };
         if (fullEventData.id) {
             setEvents(events.map(e => e.id === fullEventData.id ? { ...e, ...fullEventData } : e));
@@ -197,7 +242,7 @@ const ProvaCalendar: React.FC = () => {
                                             {dayEvents.map(event => (
                                                 <button key={event.id} onClick={() => handleEditEvent(event)} className="w-full text-left p-1 rounded-md bg-yellow-100 dark:bg-yellow-900/50 hover:bg-yellow-200 dark:hover:bg-yellow-900/80">
                                                     <p className="text-xs font-semibold text-yellow-800 dark:text-yellow-200 truncate">{event.title}</p>
-                                                    <p className="text-xs text-yellow-700 dark:text-yellow-300/80 truncate">{CLASSES_DATA.find(c => c.id === event.classId)?.name}</p>
+                                                    <p className="text-xs text-yellow-700 dark:text-yellow-300/80 truncate">{useData().classes.find(c => c.id === event.classId)?.name}</p>
                                                 </button>
                                             ))}
                                         </div>

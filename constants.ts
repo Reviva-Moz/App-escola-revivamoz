@@ -1,4 +1,4 @@
-import { Student, Teacher, Subject, Class, FinancialCategory, Enrollment, Tuition, StudentGrades, CalendarEvent, ClassCurriculum, Category, Scholarship, StudentScholarship, Transaction, Announcement, Book, BookLoan, Staff, LessonPlan, SystemSettings, UserAccount, UserRole, HealthRecord, PaymentMethod } from './types';
+import { Student, Teacher, Subject, Class, FinancialCategory, Enrollment, Tuition, StudentGrades, CalendarEvent, ClassCurriculum, Category, Scholarship, StudentScholarship, Transaction, Announcement, Book, BookLoan, Staff, LessonPlan, SystemSettings, UserAccount, UserRole, HealthRecord, PaymentMethod, Activity, AttendanceRecord, MessageTemplate } from './types';
 
 export const TOTAL_STUDENTS = 342;
 export const TOTAL_TEACHERS = 28;
@@ -8,7 +8,7 @@ export const FINANCIAL_SUMMARY = {
   totalRevenue: 233600,
   totalExpenses: 88900,
   currentBalance: 144700,
-  defaults: 1500,
+  defaults: 4500, // Updated to reflect more late fees
 };
 
 export const REVENUE_CATEGORIES: FinancialCategory[] = [
@@ -81,7 +81,7 @@ export const STUDENTS_DATA: Student[] = [
 ];
 
 export const TEACHERS_DATA: Teacher[] = [
-    { id: 1, name: 'Carlos Neto', email: 'carlos.neto@reviva.com', phone: '84 111 2222', qualifications: 'Licenciatura em Pedagogia', status: 'Ativo', photoUrl: 'https://i.pravatar.cc/150?u=carlos.neto' },
+    { id: 1, name: 'Carlos Neto', email: 'professor@reviva.mz', phone: '84 111 2222', qualifications: 'Licenciatura em Pedagogia', status: 'Ativo', photoUrl: 'https://i.pravatar.cc/150?u=carlos.neto' },
     { id: 2, name: 'Fernanda Alves', email: 'fernanda.alves@reviva.com', phone: '82 333 4444', qualifications: 'Mestrado em Matemática', status: 'Ativo' },
     { id: 3, name: 'Mariana Lima', email: 'mariana.lima@reviva.com', phone: '86 555 6666', qualifications: 'Licenciatura em Letras', status: 'Ativo' },
     { id: 4, name: 'Ricardo Sousa', email: 'ricardo.sousa@reviva.com', phone: '87 888 9999', qualifications: 'Doutoramento em Ciências', status: 'Inativo' },
@@ -146,6 +146,7 @@ export const GRADES_DATA: StudentGrades[] = [
     gradesBySubject: {
       1: { nota1: 19, nota2: 20, finalExam: 18, observations: 'Aluno exemplar. Raciocínio lógico muito apurado.' },
       3: { nota1: 16, nota2: 17, finalExam: 17, observations: 'Participativo e interessado nas aulas práticas.' },
+      4: { nota1: 14, nota2: 16, finalExam: 15, observations: 'Bom desempenho em História.' },
     }
   },
     {
@@ -153,6 +154,28 @@ export const GRADES_DATA: StudentGrades[] = [
     gradesBySubject: {
       1: { nota1: '', nota2: '', finalExam: '', observations: '' },
       3: { nota1: 14, nota2: 15, finalExam: '', observations: 'Necessita de apoio nos trabalhos de casa.' },
+      4: { nota1: 11, nota2: 13, finalExam: 12, observations: 'Pode melhorar a participação.' },
+    }
+  },
+  {
+    studentId: 3, // Carla Dias
+    gradesBySubject: {
+      2: { nota1: 14, nota2: 16, finalExam: 15, observations: 'Boa aluna.' },
+      5: { nota1: 17, nota2: 16, finalExam: '', observations: 'Muito interessada em Geografia.' },
+    }
+  },
+  {
+    studentId: 6, // Fábio Gomes
+    gradesBySubject: {
+      2: { nota1: 11, nota2: 12, finalExam: 10, observations: 'Precisa de apoio em Português.' },
+      5: { nota1: 13, nota2: 14, finalExam: 14, observations: '' },
+    }
+  },
+  {
+    studentId: 7, // Pedro Silva
+    gradesBySubject: {
+      2: { nota1: 12, nota2: 13, finalExam: 11, observations: '' },
+      5: { nota1: 15, nota2: 15, finalExam: 16, observations: 'Excelente trabalho.' },
     }
   },
 ];
@@ -171,8 +194,24 @@ export const TUITION_DATA: Tuition[] = [
     { id: 3, studentId: 3, studentName: 'Carla Dias', month: 'Junho', dueDate: '2024-06-05', amount: 1500, status: 'Atrasado' },
     { id: 4, studentId: 4, studentName: 'David Martins', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pendente' },
     { id: 5, studentId: 5, studentName: 'Elisa Ferreira', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pago' },
-    { id: 6, studentId: 6, studentName: 'Fábio Gomes', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pendente' },
+    { id: 6, studentId: 6, studentName: 'Fábio Gomes', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Atrasado' },
     { id: 7, studentId: 7, studentName: 'Pedro Silva', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Pendente' },
+    { id: 8, studentId: 3, studentName: 'Carla Dias', month: 'Julho', dueDate: '2024-07-05', amount: 1500, status: 'Atrasado' },
+];
+
+export const ATTENDANCE_DATA: AttendanceRecord[] = [
+    { id: 1, studentId: 1, date: '2024-07-29', status: 'Presente', subjectId: 1 },
+    { id: 2, studentId: 1, date: '2024-07-29', status: 'Presente', subjectId: 2 },
+    { id: 3, studentId: 1, date: '2024-07-28', status: 'Presente', subjectId: 1 },
+    { id: 4, studentId: 1, date: '2024-07-27', status: 'Ausente', subjectId: 1 },
+    { id: 5, studentId: 1, date: '2024-07-26', status: 'Justificado', subjectId: 2 },
+];
+
+export const RECENT_ACTIVITIES_DATA: Activity[] = [
+  { id: 1, type: 'new_student', description: 'Novo aluno, Marcos André, foi matriculado na 5ª Classe A.', date: new Date().toISOString(), link: '/alunos' },
+  { id: 2, type: 'payment', description: 'Pagamento de mensalidade recebido de Ana Silva.', date: new Date(Date.now() - 3600 * 1000 * 2).toISOString(), link: '/financeiro' },
+  { id: 3, type: 'announcement', description: 'Novo comunicado "ALERTA: Interrupção no Fornecimento de Água" foi publicado.', date: new Date(Date.now() - 3600 * 1000 * 5).toISOString(), link: '/comunicacao' },
+  { id: 4, type: 'new_teacher', description: 'Nova professora, Joana Pinto, foi adicionada ao corpo docente.', date: new Date(Date.now() - 3600 * 1000 * 24).toISOString(), link: '/professores' },
 ];
 
 export const CLASS_DISTRIBUTION_DATA = [
@@ -341,6 +380,16 @@ export const LESSON_PLANS_DATA: LessonPlan[] = [
         objectives: '1. Identificar as principais formas de relevo do país.\n2. Localizar no mapa as planícies, planaltos e montanhas.',
         content: 'Apresentação de mapa físico de Moçambique. Discussão em grupo sobre as diferentes altitudes e suas características.',
         resources: 'Mapa físico de Moçambique, projetor, livro didático.'
+    },
+    {
+        id: 5,
+        classId: 2,
+        subjectId: 4, // História
+        title: 'A Expansão Marítima Portuguesa',
+        date: todayStr,
+        objectives: '1. Compreender as motivações da expansão.\n2. Identificar as principais rotas e descobrimentos.',
+        content: 'Discussão com base em mapas históricos. Leitura de trechos selecionados.',
+        resources: 'Mapa-múndi histórico, projetor, livro de História.'
     }
 ];
 
@@ -380,4 +429,10 @@ export const PAYMENT_METHODS_DATA: PaymentMethod[] = [
   { id: 2, name: 'e-Mola', type: 'Digital', instructions: 'Pagamento via App ou USSD. Entidade: 54321', status: 'Ativo' },
   { id: 3, name: 'Transferência Bancária', type: 'Digital', instructions: 'BCI - NIB: 000800001234567891017', status: 'Ativo' },
   { id: 4, name: 'Dinheiro (Tesouraria)', type: 'Físico', instructions: 'Pagamento presencial na secretaria da escola.', status: 'Ativo' },
+];
+
+export const MESSAGE_TEMPLATES_DATA: MessageTemplate[] = [
+    { id: 1, name: '1º Lembrete Amigável', shortcut: '/lembrete1', content: 'Olá! Gostaríamos de lembrar que a mensalidade de {mes} para o(a) aluno(a) {aluno}, no valor de {valor}, está pendente. Agradecemos a sua atenção.' },
+    { id: 2, name: 'Aviso de Atraso', shortcut: '/atraso', content: 'Prezado(a) encarregado(a) de {aluno}, verificamos que a mensalidade de {mes} ({valor}) se encontra em atraso. Por favor, regularize a situação o mais breve possível para evitar constrangimentos.' },
+    { id: 3, name: 'Último Aviso', shortcut: '/ultimato', content: 'URGENTE: Esta é a notificação final sobre a mensalidade de {mes} para {aluno} ({valor}). A falta de pagamento implicará em medidas administrativas conforme o regulamento da escola. Contacte-nos imediatamente.' },
 ];

@@ -29,6 +29,7 @@ import Collaborators from './screens/Collaborators';
 import CollaboratorForm from './screens/CollaboratorForm';
 import LessonPlan from './screens/LessonPlan';
 import Settings from './screens/Settings';
+import AIConfiguration from './screens/AIConfiguration';
 
 const App: React.FC = () => {
   return (
@@ -83,6 +84,7 @@ const App: React.FC = () => {
                 <Route path="/relatorios" element={<Reports />} />
                 <Route path="/plano-de-acao" element={<ActionPlan />} />
                 <Route path="/configuracoes" element={<Settings />} />
+                <Route path="/configuracoes/assistente-ia" element={<AIConfiguration />} />
               </Routes>
             </Layout>
           </ProtectedRoute>

@@ -1,12 +1,12 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/Header';
 import { Card } from '../../components/ui/Card';
-import { ArrowLeftIcon, BookOpenIcon, CalendarDaysIcon, ChartPieIcon, CurrencyDollarIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { BookOpenIcon, CalendarDaysIcon, ChartPieIcon, CurrencyDollarIcon, PlusIcon, BellIcon } from '@heroicons/react/24/outline';
 import { Button } from '../../components/ui/Button';
-import { GradeRecord, Subject, Tuition, HealthRecord } from '../../types';
+import { GradeRecord, Subject, Tuition, HealthRecord, AnnouncementCategory } from '../../types';
 import { Badge } from '../../components/ui/Badge';
 import { formatCurrency } from '../../utils/formatters';
 import { HeartIcon } from '../../components/icons';
@@ -67,18 +67,11 @@ const HealthRecordModal: React.FC<{
 const StudentDashboard: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    
-    // Numa app real, o ID viria do contexto do utilizador. Para demo, usamos o da URL ou um fallback.
     const studentId = parseInt(id || '1');
     
     const { 
-        students, 
-        grades: gradesData,
-        subjects,
-        classCurriculum,
-        tuition,
-        calendarEvents,
-        healthRecords: allHealthRecords
+        students, grades: gradesData, subjects, classCurriculum, tuition, 
+        calendarEvents, healthRecords: allHealthRecords, attendance, announcements
     } = useData();
 
     const [healthRecords, setHealthRecords] = useState(() => allHealthRecords.filter(r => r.studentId === studentId));
@@ -107,73 +100,87 @@ const StudentDashboard: React.FC = () => {
     const upcomingEvents = calendarEvents.filter(event => {
         const eventDate = new Date(event.date);
         const today = new Date();
-        today.setHours(0,0,0,0); // Compare dates only
+        today.setHours(0,0,0,0);
         const isFuture = eventDate >= today;
         const isForClass = event.type === 'Prova' && event.classId === student.classId;
         const isGeneral = event.type !== 'Prova';
         return isFuture && (isForClass || isGeneral);
     }).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(0, 5);
+    .slice(0, 3);
+    
+    const studentAnnouncements = announcements.filter(a => a.target === 'Todos' || a.target === 'Pais' || a.target === student.class).slice(0, 3);
 
-    const calculateAverage = (gradeRecord: GradeRecord): string => {
+    const calculateAverage = (gradeRecord: GradeRecord): number | null => {
         const notes = [gradeRecord.nota1, gradeRecord.nota2, gradeRecord.finalExam];
         const validNotes = notes.map(n => parseFloat(String(n))).filter(n => !isNaN(n) && n >= 0 && n <= 20);
-        if (validNotes.length === 0) return '-';
+        if (validNotes.length === 0) return null;
         const sum = validNotes.reduce((acc, curr) => acc + curr, 0);
-        return (sum / validNotes.length).toFixed(2);
+        return sum / validNotes.length;
     };
 
-    const getStatusBadge = (status: Tuition['status']) => {
-        switch (status) {
-            case 'Pago': return <Badge variant="success">Pago</Badge>;
-            case 'Pendente': return <Badge variant="warning">Pendente</Badge>;
-            case 'Atrasado': return <Badge variant="destructive">Atrasado</Badge>;
-        }
-    };
+    const overallAverage = useMemo(() => {
+        if (!studentGrades) return null;
+        const subjectAverages = Object.values(studentGrades.gradesBySubject)
+            .map(calculateAverage)
+            .filter((avg): avg is number => avg !== null);
+        if (subjectAverages.length === 0) return null;
+        const totalAverage = subjectAverages.reduce((a, b) => a + b, 0) / subjectAverages.length;
+        return totalAverage.toFixed(2);
+    }, [studentGrades]);
+
+    const attendanceStats = useMemo(() => {
+        const records = attendance.filter(a => a.studentId === studentId);
+        const total = records.length;
+        const present = records.filter(r => r.status === 'Presente').length;
+        const absent = records.filter(r => r.status === 'Ausente').length;
+        const justified = records.filter(r => r.status === 'Justificado').length;
+        const rate = total > 0 ? ((present + justified) / total) * 100 : 100;
+        return { total, present, absent, justified, rate: rate.toFixed(1) };
+    }, [attendance, studentId]);
 
     const handleSaveHealthRecord = (record: Omit<HealthRecord, 'id' | 'studentId' | 'recordedBy'>) => {
-        const newRecord: HealthRecord = {
-            ...record,
-            id: Date.now(),
-            studentId,
-            recordedBy: 'Sónia Pereira', // Logged-in user
-        };
-        // TODO: Call context function
+        const newRecord: HealthRecord = { ...record, id: Date.now(), studentId, recordedBy: 'Sónia Pereira' };
         setHealthRecords(prev => [newRecord, ...prev]);
     };
     
     return (
         <>
-            <PageHeader title={`Portal do Aluno`} subtitle={`Visão consolidada para o percurso académico.`} />
+            <PageHeader title="Portal do Aluno" subtitle="Visão consolidada do percurso académico." />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Content Column */}
                 <div className="lg:col-span-2 space-y-8">
                     <InfoCard title="Desempenho Académico" icon={<BookOpenIcon className="h-6 w-6"/>}>
+                        {overallAverage && (
+                            <div className="text-center mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Média Geral Atual</p>
+                                <p className={`text-5xl font-bold ${parseFloat(overallAverage) >= 10 ? 'text-green-500' : 'text-red-500'}`}>
+                                    {overallAverage}
+                                </p>
+                            </div>
+                        )}
                         <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
+                             <table className="w-full text-sm">
                                 <thead className="text-left text-slate-600 dark:text-slate-400">
                                     <tr>
                                         <th className="p-2">Disciplina</th>
                                         <th className="p-2 text-center">Nota 1</th>
                                         <th className="p-2 text-center">Nota 2</th>
-                                        <th className="p-2 text-center">Exame Final</th>
+                                        <th className="p-2 text-center">Exame</th>
                                         <th className="p-2 text-center font-bold">Média</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {subjectsForClass.map(subject => {
                                         const grades = studentGrades?.gradesBySubject[subject.id];
-                                        const average = grades ? calculateAverage(grades) : '-';
-                                        const avgNum = parseFloat(average);
+                                        const average = grades ? calculateAverage(grades)?.toFixed(2) : '-';
+                                        const avgNum = parseFloat(average || '');
                                         const averageColor = isNaN(avgNum) ? '' : avgNum >= 10 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
-
                                         return (
                                             <tr key={subject.id} className="border-t border-slate-200 dark:border-slate-700">
                                                 <td className="p-2 font-medium text-slate-800 dark:text-slate-200">{subject.name}</td>
-                                                <td className="p-2 text-center">{grades?.nota1 || '-'}</td>
-                                                <td className="p-2 text-center">{grades?.nota2 || '-'}</td>
-                                                <td className="p-2 text-center">{grades?.finalExam || '-'}</td>
+                                                <td className="p-2 text-center">{grades?.nota1 ?? '-'}</td>
+                                                <td className="p-2 text-center">{grades?.nota2 ?? '-'}</td>
+                                                <td className="p-2 text-center">{grades?.finalExam ?? '-'}</td>
                                                 <td className={`p-2 text-center font-bold text-lg ${averageColor}`}>{average}</td>
                                             </tr>
                                         )
@@ -183,28 +190,7 @@ const StudentDashboard: React.FC = () => {
                         </div>
                     </InfoCard>
 
-                     <InfoCard title="Situação Financeira" icon={<CurrencyDollarIcon className="h-6 w-6"/>}>
-                        {pendingTuition.length > 0 ? (
-                             <ul className="space-y-3">
-                                {pendingTuition.map(t => (
-                                    <li key={t.id} className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                                        <div>
-                                            <p className="font-semibold">Mensalidade de {t.month}</p>
-                                            <p className="text-sm text-slate-500 dark:text-slate-400">Vencimento: {t.dueDate}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold">{formatCurrency(t.amount)}</p>
-                                            {getStatusBadge(t.status)}
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                             <p className="text-center text-slate-500 dark:text-slate-400 py-4">Nenhuma mensalidade pendente.</p>
-                        )}
-                     </InfoCard>
-                     
-                      <InfoCard 
+                    <InfoCard 
                         title="Registo de Saúde" 
                         icon={<HeartIcon className="h-6 w-6"/>}
                         actions={<Button size="sm" onClick={() => setHealthModalOpen(true)}><PlusIcon className="h-4 w-4 mr-1"/> Adicionar</Button>}
@@ -213,10 +199,7 @@ const StudentDashboard: React.FC = () => {
                              <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
                                 {healthRecords.map(rec => (
                                     <div key={rec.id} className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-sm">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <p className="font-bold">{new Date(rec.date).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                                            <p className="text-xs text-slate-500">Por: {rec.recordedBy}</p>
-                                        </div>
+                                        <p className="font-bold">{new Date(rec.date).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                                         <p><span className="font-semibold">Ocorrência:</span> {rec.description}</p>
                                         <p><span className="font-semibold">Ação Tomada:</span> {rec.actionTaken}</p>
                                     </div>
@@ -226,64 +209,44 @@ const StudentDashboard: React.FC = () => {
                              <p className="text-center text-slate-500 dark:text-slate-400 py-4">Nenhum registo de saúde encontrado.</p>
                         )}
                      </InfoCard>
-
                 </div>
 
-                {/* Sidebar Column */}
                 <div className="space-y-8">
-                    <ProfileCard 
-                        name={student.name}
-                        imageUrl={student.photoUrl}
-                        details={{
-                            Turma: student.class,
-                            Idade: `${student.age} anos`,
-                            Encarregado: student.guardian,
-                            Telefone: student.phone
-                        }}
-                    />
+                    <ProfileCard name={student.name} imageUrl={student.photoUrl} details={{ Turma: student.class, Encarregado: student.guardian, Telefone: student.phone }}/>
                     
-                    <InfoCard title="Assiduidade (Simulado)" icon={<ChartPieIcon className="h-6 w-6"/>}>
-                        <div className="flex justify-around text-center">
-                            <div>
-                                <p className="text-3xl font-bold text-green-500">96%</p>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Presenças</p>
-                            </div>
-                            <div>
-                                <p className="text-3xl font-bold text-red-500">4%</p>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Faltas</p>
-                            </div>
+                    <InfoCard title="Assiduidade" icon={<ChartPieIcon className="h-6 w-6"/>}>
+                        <div className="text-center">
+                            <p className="text-sm text-slate-500 dark:text-slate-400">Taxa de Presença</p>
+                            <p className="text-5xl font-bold text-green-500">{attendanceStats.rate}%</p>
                         </div>
-                         <p className="text-xs text-center mt-4 text-slate-400 dark:text-slate-500">Dados simulados para o trimestre atual.</p>
+                        <div className="flex justify-around text-center mt-4 pt-4 border-t dark:border-slate-700">
+                            <div><p className="text-xl font-bold">{attendanceStats.present}</p><p className="text-xs">Presenças</p></div>
+                            <div><p className="text-xl font-bold">{attendanceStats.absent}</p><p className="text-xs">Faltas</p></div>
+                            <div><p className="text-xl font-bold">{attendanceStats.justified}</p><p className="text-xs">Justificadas</p></div>
+                        </div>
                     </InfoCard>
 
-                    <InfoCard title="Próximos Eventos" icon={<CalendarDaysIcon className="h-6 w-6"/>}>
-                         {upcomingEvents.length > 0 ? (
+                    <InfoCard title="Mural de Avisos" icon={<BellIcon className="h-6 w-6"/>}>
+                         {studentAnnouncements.length > 0 ? (
                              <ul className="space-y-3">
-                                {upcomingEvents.map(event => (
-                                    <li key={event.id} className="flex items-start gap-3">
-                                        <div className="flex-shrink-0 text-center bg-slate-100 dark:bg-slate-700 rounded-md p-2 w-16">
-                                            <p className="font-bold text-reviva-green dark:text-reviva-green-light text-lg">{new Date(event.date).toLocaleDateString('pt-MZ', { day: '2-digit' })}</p>
-                                            <p className="text-xs">{new Date(event.date).toLocaleDateString('pt-MZ', { month: 'short' })}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-semibold">{event.title}</p>
-                                            <Badge variant={event.type === 'Prova' ? 'warning' : 'default'}>{event.type}</Badge>
-                                        </div>
+                                {studentAnnouncements.map(ann => (
+                                    <li key={ann.id} className="text-sm">
+                                      <div className="flex justify-between items-center">
+                                        <p className="font-semibold">{ann.title}</p>
+                                        <Badge variant={ann.category === 'Urgente' ? 'destructive' : 'default'}>{ann.category}</Badge>
+                                      </div>
+                                      <p className="text-xs text-slate-500">{new Date(ann.date).toLocaleDateString('pt-MZ')}</p>
                                     </li>
                                 ))}
                             </ul>
                         ) : (
-                             <p className="text-center text-slate-500 dark:text-slate-400 py-4">Nenhum evento agendado.</p>
+                             <p className="text-center text-slate-500 dark:text-slate-400 py-4">Nenhum aviso recente.</p>
                         )}
                     </InfoCard>
                 </div>
             </div>
 
-            <HealthRecordModal
-                isOpen={isHealthModalOpen}
-                onClose={() => setHealthModalOpen(false)}
-                onSave={handleSaveHealthRecord}
-            />
+            <HealthRecordModal isOpen={isHealthModalOpen} onClose={() => setHealthModalOpen(false)} onSave={handleSaveHealthRecord}/>
         </>
     );
 };

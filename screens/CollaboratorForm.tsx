@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
@@ -9,6 +10,7 @@ import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { useData } from '../context/DataContext';
 import { Staff } from '../types';
+import WebcamCapture from '../components/WebcamCapture';
 
 const CollaboratorForm: React.FC = () => {
     const { id } = useParams();
@@ -23,7 +25,8 @@ const CollaboratorForm: React.FC = () => {
         email: '',
         phone: '',
         status: 'Ativo',
-        nuit: ''
+        nuit: '',
+        photoUrl: '',
     });
 
     useEffect(() => {
@@ -38,6 +41,10 @@ const CollaboratorForm: React.FC = () => {
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormState(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handlePhotoCapture = (imageDataUrl: string) => {
+        setFormState(prev => ({ ...prev, photoUrl: imageDataUrl }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -62,36 +69,46 @@ const CollaboratorForm: React.FC = () => {
                 <PageHeader title={title} subtitle={subtitle} />
             </div>
             
-            <Card>
-                <form onSubmit={handleSubmit} className="p-6">
-                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <Input label="Nome Completo" id="name" name="name" value={formState.name} onChange={handleChange} required />
-                        <Input label="Cargo" id="role" name="role" value={formState.role} onChange={handleChange} required placeholder="Ex: Professor, Secretária"/>
-                         <Select label="Departamento" id="department" name="department" value={formState.department} onChange={handleChange} required>
-                            <option>Académico</option>
-                            <option>Administrativo</option>
-                            <option>Financeiro</option>
-                             <option>Operações</option>
-                        </Select>
-                        <Input label="Email" id="email" name="email" type="email" value={formState.email} onChange={handleChange} required />
-                        <Input label="Contacto Telefónico" id="phone" name="phone" type="tel" value={formState.phone} onChange={handleChange} required />
-                        <Input label="NUIT" id="nuit" name="nuit" value={formState.nuit || ''} onChange={handleChange} placeholder="Opcional" />
-                         <Select label="Status" id="status" name="status" value={formState.status} onChange={handleChange}>
-                            <option value="Ativo">Ativo</option>
-                            <option value="Inativo">Inativo</option>
-                        </Select>
+            <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2">
+                        <Card className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <Input label="Nome Completo" id="name" name="name" value={formState.name} onChange={handleChange} required />
+                                <Input label="Cargo" id="role" name="role" value={formState.role} onChange={handleChange} required placeholder="Ex: Professor, Secretária"/>
+                                <Select label="Departamento" id="department" name="department" value={formState.department} onChange={handleChange} required>
+                                    <option>Académico</option>
+                                    <option>Administrativo</option>
+                                    <option>Financeiro</option>
+                                    <option>Operações</option>
+                                </Select>
+                                <Input label="Email" id="email" name="email" type="email" value={formState.email} onChange={handleChange} required />
+                                <Input label="Contacto Telefónico" id="phone" name="phone" type="tel" value={formState.phone} onChange={handleChange} required />
+                                <Input label="NUIT" id="nuit" name="nuit" value={formState.nuit || ''} onChange={handleChange} placeholder="Opcional" />
+                                <Select label="Status" id="status" name="status" value={formState.status} onChange={handleChange}>
+                                    <option value="Ativo">Ativo</option>
+                                    <option value="Inativo">Inativo</option>
+                                </Select>
+                            </div>
+                        </Card>
                     </div>
-                    
-                    <div className="flex justify-end mt-8 gap-4">
-                        <Button type="button" variant="secondary" onClick={() => navigate('/colaboradores')}>
-                            Cancelar
-                        </Button>
-                        <Button type="submit">
-                            {isEditing ? 'Salvar Alterações' : 'Adicionar Colaborador'}
-                        </Button>
+                    <div>
+                        <Card className="p-6">
+                            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 border-b-2 border-reviva-green pb-2 mb-4">Fotografia</h3>
+                            <WebcamCapture onCapture={handlePhotoCapture} initialImage={formState.photoUrl} />
+                        </Card>
                     </div>
-                </form>
-            </Card>
+                </div>
+                
+                <div className="flex justify-end mt-8 gap-4">
+                    <Button type="button" variant="secondary" onClick={() => navigate('/colaboradores')}>
+                        Cancelar
+                    </Button>
+                    <Button type="submit">
+                        {isEditing ? 'Salvar Alterações' : 'Adicionar Colaborador'}
+                    </Button>
+                </div>
+            </form>
         </>
     );
 };

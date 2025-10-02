@@ -1,34 +1,28 @@
+
+
 import React, { useState, useMemo, useEffect, FC } from 'react';
 import PageHeader from '../components/Header';
-import { CLASSES_DATA, SUBJECTS_DATA, STUDENTS_DATA, GRADES_DATA, CLASS_CURRICULUM_DATA, CLASS_CURRICULUM_DATA as CLASS_CURRICULUM_DATA_1 } from '../constants';
 import { StudentGrades, GradeRecord, Student, Subject } from '../types';
 import { DocumentDuplicateIcon } from '@heroicons/react/24/outline';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { PencilSquareIcon } from '../components/icons';
-
-const calculateAverage = (gradeRecord: GradeRecord | undefined): string => {
-    if (!gradeRecord) return '-';
-    const notes = [gradeRecord.nota1, gradeRecord.nota2, gradeRecord.finalExam];
-    const validNotes = notes.map(n => parseFloat(String(n))).filter(n => !isNaN(n) && n >= 0 && n <= 20);
-    
-    if (validNotes.length === 0) return '-';
-    
-    const sum = validNotes.reduce((acc, curr) => acc + curr, 0);
-    const average = sum / validNotes.length;
-    return average.toFixed(2);
-};
+import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
+import { calculateAverage } from '../utils/formatters';
 
 const BoletimModal: FC<{ 
     student: Student; 
     gradesData: StudentGrades[];
+    subjects: Subject[];
+    classCurriculum: any[];
     onClose: () => void;
-}> = ({ student, gradesData, onClose }) => {
+}> = ({ student, gradesData, subjects, classCurriculum, onClose }) => {
     const studentGrades = gradesData.find(sg => sg.studentId === student.id);
-    const subjectsForClass = CLASS_CURRICULUM_DATA_1
+    const subjectsForClass = classCurriculum
         .filter(c => c.classId === student.classId)
-        .map(c => SUBJECTS_DATA.find(s => s.id === c.subjectId))
+        .map(c => subjects.find(s => s.id === c.subjectId))
         .filter((s): s is Subject => s !== undefined);
 
     return (
@@ -49,9 +43,9 @@ const BoletimModal: FC<{
                         <tbody>
                             {subjectsForClass.map(subject => {
                                 const grades = studentGrades?.gradesBySubject[subject.id];
-                                const average = calculateAverage(grades);
-                                const avgNum = parseFloat(average);
-                                const averageColor = isNaN(avgNum) ? '' : avgNum >= 10 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+                                const averageNum = calculateAverage(grades);
+                                const average = averageNum?.toFixed(2) || '-';
+                                const averageColor = !averageNum ? '' : averageNum >= 10 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
 
                                 return (
                                     <tr key={subject.id} className="border-t border-slate-200 dark:border-slate-700">
@@ -82,31 +76,62 @@ const BoletimModal: FC<{
 };
 
 const Grades: React.FC = () => {
-    const [selectedClassId, setSelectedClassId] = useState<string>(CLASSES_DATA[0]?.id.toString() || '');
-    const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
-    const [gradesData, setGradesData] = useState<StudentGrades[]>(GRADES_DATA);
+    const { user } = useAuth();
+    const { classes, subjects, students, grades: initialGradesData, classCurriculum, teachers } = useData();
+    const [gradesData, setGradesData] = useState<StudentGrades[]>(initialGradesData);
     const [isBoletimModalOpen, setBoletimModalOpen] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
+    const loggedInTeacher = useMemo(() => {
+        if (user?.role !== 'PROFESSOR') return null;
+        return teachers.find(t => t.email.toLowerCase() === user.email.toLowerCase());
+    }, [user, teachers]);
+
+    const teacherCurriculum = useMemo(() => {
+        if (!loggedInTeacher) return [];
+        return classCurriculum.filter(cc => cc.teacherId === loggedInTeacher.id);
+    }, [loggedInTeacher, classCurriculum]);
+    
+    const classesToDisplay = useMemo(() => {
+        if (loggedInTeacher) {
+            const teacherClassIds = new Set(teacherCurriculum.map(cc => cc.classId));
+            return classes.filter(c => teacherClassIds.has(c.id));
+        }
+        return classes;
+    }, [loggedInTeacher, teacherCurriculum, classes]);
+
+    const [selectedClassId, setSelectedClassId] = useState<string>(classesToDisplay[0]?.id.toString() || '');
+    const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+    
     const studentsInClass = useMemo(() => {
         if (!selectedClassId) return [];
-        return STUDENTS_DATA.filter(student => student.classId === parseInt(selectedClassId));
-    }, [selectedClassId]);
+        return students.filter(student => student.classId === parseInt(selectedClassId));
+    }, [selectedClassId, students]);
 
     const subjectsForClass = useMemo(() => {
         if (!selectedClassId) return [];
-        const curriculumForClass = CLASS_CURRICULUM_DATA.filter(c => c.classId === parseInt(selectedClassId));
-        return SUBJECTS_DATA.filter(subject =>
+        if (loggedInTeacher) {
+            const teacherSubjectIds = teacherCurriculum
+                .filter(cc => cc.classId === parseInt(selectedClassId))
+                .map(cc => cc.subjectId);
+            return subjects.filter(subject => teacherSubjectIds.includes(subject.id));
+        }
+        const curriculumForClass = classCurriculum.filter(c => c.classId === parseInt(selectedClassId));
+        return subjects.filter(subject =>
             curriculumForClass.some(c => c.subjectId === subject.id)
         );
-    }, [selectedClassId]);
+    }, [selectedClassId, subjects, classCurriculum, loggedInTeacher, teacherCurriculum]);
 
     useEffect(() => {
-        if (subjectsForClass.length > 0) {
-            if (!subjectsForClass.some(s => s.id.toString() === selectedSubjectId)) {
-                setSelectedSubjectId(subjectsForClass[0].id.toString());
-            }
-        } else {
+      if (classesToDisplay.length > 0 && !classesToDisplay.some(c => c.id.toString() === selectedClassId)) {
+        setSelectedClassId(classesToDisplay[0].id.toString());
+      }
+    }, [classesToDisplay, selectedClassId]);
+
+    useEffect(() => {
+        if (subjectsForClass.length > 0 && !subjectsForClass.some(s => s.id.toString() === selectedSubjectId)) {
+            setSelectedSubjectId(subjectsForClass[0].id.toString());
+        } else if (subjectsForClass.length === 0) {
             setSelectedSubjectId('');
         }
     }, [selectedClassId, subjectsForClass, selectedSubjectId]);
@@ -141,7 +166,7 @@ const Grades: React.FC = () => {
     };
     
     const handleOpenBoletim = (studentId: number) => {
-        const student = STUDENTS_DATA.find(s => s.id === studentId);
+        const student = students.find(s => s.id === studentId);
         if (student) {
             setSelectedStudent(student);
             setBoletimModalOpen(true);
@@ -162,7 +187,7 @@ const Grades: React.FC = () => {
                             onChange={(e) => setSelectedClassId(e.target.value)}
                             className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white dark:bg-slate-700 dark:text-slate-100"
                         >
-                            {CLASSES_DATA.map(cls => (
+                            {classesToDisplay.map(cls => (
                                 <option key={cls.id} value={cls.id}>{cls.name}</option>
                             ))}
                         </select>
@@ -206,7 +231,7 @@ const Grades: React.FC = () => {
                             {studentsInClass.map(student => {
                                 const studentGrades = gradesData.find(sg => sg.studentId === student.id);
                                 const currentGrades = selectedSubjectId ? studentGrades?.gradesBySubject[parseInt(selectedSubjectId)] : undefined;
-                                const average = calculateAverage(currentGrades);
+                                const average = calculateAverage(currentGrades)?.toFixed(2) ?? '-';
 
                                 return (
                                     <tr key={student.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
@@ -261,6 +286,8 @@ const Grades: React.FC = () => {
                 <BoletimModal
                     student={selectedStudent}
                     gradesData={gradesData}
+                    subjects={subjects}
+                    classCurriculum={classCurriculum}
                     onClose={() => setBoletimModalOpen(false)}
                 />
             )}

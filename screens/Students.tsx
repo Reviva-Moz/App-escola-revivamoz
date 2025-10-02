@@ -1,10 +1,11 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
 import DataTable from '../components/DataTable';
 import { Student } from '../types';
-import { PlusIcon, PencilIcon, IdentificationIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, IdentificationIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { Badge } from '../components/ui/Badge';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -13,7 +14,7 @@ import { useData } from '../context/DataContext';
 const Students: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const { students, classes } = useData();
+  const { students, classes, deleteStudent } = useData();
 
   const studentsWithClassNames = useMemo(() => {
     return students.map(student => {
@@ -31,21 +32,37 @@ const Students: React.FC = () => {
     ), [searchTerm, studentsWithClassNames]
   );
 
-  const actionButtons = (studentId: number) => (
-    <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+  const handleDelete = (student: Student) => {
+    if (window.confirm(`Tem a certeza que deseja remover o(a) aluno(a) ${student.name}? Esta ação não pode ser desfeita.`)) {
+        deleteStudent(student.id);
+    }
+  }
+
+  const actionButtons = (student: Student) => (
+    <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
       <Button 
         variant="link"
-        onClick={() => navigate(`/alunos/${studentId}/editar`)}
+        size="sm"
+        onClick={() => navigate(`/alunos/${student.id}/editar`)}
         aria-label={`Editar aluno`}
         >
          <PencilIcon className="h-4 w-4 mr-1"/> Editar
       </Button>
       <Button 
         variant="link" 
+        size="sm"
         className="text-reviva-green hover:text-reviva-green-dark"
-        onClick={() => navigate(`/portal-aluno/${studentId}`)}
+        onClick={() => navigate(`/portal-aluno/${student.id}`)}
       >
         <IdentificationIcon className="h-4 w-4 mr-1"/> Ver Portal
+      </Button>
+      <Button 
+        variant="link"
+        size="sm"
+        className="text-red-500 hover:text-red-700"
+        onClick={() => handleDelete(student)}
+      >
+        <TrashIcon className="h-4 w-4 mr-1"/> Remover
       </Button>
     </div>
   );
@@ -57,7 +74,7 @@ const Students: React.FC = () => {
     student.guardian,
     student.phone,
     <Badge variant={student.status === 'Ativo' ? 'success' : 'default'}>{student.status}</Badge>,
-    actionButtons(student.id)
+    actionButtons(student)
   ]);
   
   return (

@@ -1,4 +1,6 @@
+
 import React, { useState, FC, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
@@ -8,7 +10,7 @@ import { SystemSettings, UserAccount, UserRole } from '../types';
 import { ROLES } from '../constants';
 import DataTable from '../components/DataTable';
 import { Badge } from '../components/ui/Badge';
-import { KeyIcon, PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
+import { KeyIcon, PencilIcon, TrashIcon, PlusIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import { Modal } from '../components/ui/Modal';
 import { useData } from '../context/DataContext';
 
@@ -59,6 +61,7 @@ const UserFormModal: FC<{
 
 const Settings: React.FC = () => {
   const { systemSettings, users, updateSettings, addUser, updateUser, deleteUser } = useData();
+  const navigate = useNavigate();
 
   const [settings, setSettings] = useState<SystemSettings>(systemSettings);
   const [isUserModalOpen, setUserModalOpen] = useState(false);
@@ -153,6 +156,22 @@ const Settings: React.FC = () => {
                 <Input id="defaultTuition" name="defaultTuition" label="Valor Padrão da Mensalidade (MZN)" type="number" value={settings.defaultTuition} onChange={handleSettingsChange} />
             </div>
         </Card>
+        
+        <Card className="p-6 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-50 dark:bg-slate-800/50">
+            <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 bg-reviva-green/20 text-reviva-green rounded-lg flex items-center justify-center">
+                    <SparklesIcon className="h-7 w-7" />
+                 </div>
+                 <div>
+                    <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200">Assistente de IA</h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Treine e configure o copiloto de IA para os professores.</p>
+                 </div>
+            </div>
+            <Button onClick={() => navigate('/configuracoes/assistente-ia')}>
+                Configurar Assistente
+            </Button>
+        </Card>
+
 
         <div className="flex justify-end">
             <Button onClick={handleSaveSettings}>Salvar Todas as Configurações</Button>

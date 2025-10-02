@@ -1,45 +1,78 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import PageHeader from '../components/Header';
-import { CLASSES_DATA, STUDENTS_DATA, SUBJECTS_DATA, CLASS_CURRICULUM_DATA } from '../constants';
 import { Student } from '../types';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { useData } from '../context/DataContext';
+import { useAuth } from '../context/AuthContext';
 
 type AttendanceStatus = 'Presente' | 'Ausente' | 'Justificado';
 
 const Attendance: React.FC = () => {
+  const { user } = useAuth();
+  const { classes, students, subjects, classCurriculum, teachers } = useData();
+
   const today = new Date().toISOString().split('T')[0];
-  const [selectedClassId, setSelectedClassId] = useState<string>(CLASSES_DATA[0]?.id.toString() || '');
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [attendance, setAttendance] = useState<{ [studentId: number]: AttendanceStatus }>({});
 
-  const studentsInClass = useMemo(() => {
-    if (!selectedClassId) return [];
-    return STUDENTS_DATA.filter(student => student.classId === parseInt(selectedClassId));
-  }, [selectedClassId]);
+  const loggedInTeacher = useMemo(() => {
+    if (user?.role !== 'PROFESSOR') return null;
+    return teachers.find(t => t.email.toLowerCase() === user.email.toLowerCase());
+  }, [user, teachers]);
+
+  const teacherCurriculum = useMemo(() => {
+    if (!loggedInTeacher) return [];
+    return classCurriculum.filter(cc => cc.teacherId === loggedInTeacher.id);
+  }, [loggedInTeacher, classCurriculum]);
+
+  const classesToDisplay = useMemo(() => {
+    if (loggedInTeacher) {
+      const teacherClassIds = new Set(teacherCurriculum.map(cc => cc.classId));
+      return classes.filter(c => teacherClassIds.has(c.id));
+    }
+    return classes;
+  }, [loggedInTeacher, teacherCurriculum, classes]);
+
+  const [selectedClassId, setSelectedClassId] = useState<string>(classesToDisplay[0]?.id.toString() || '');
 
   const subjectsForClass = useMemo(() => {
     if (!selectedClassId) return [];
-    const curriculumForClass = CLASS_CURRICULUM_DATA.filter(c => c.classId === parseInt(selectedClassId));
-    return SUBJECTS_DATA.filter(subject =>
+    if (loggedInTeacher) {
+        const teacherSubjectIds = teacherCurriculum
+            .filter(cc => cc.classId === parseInt(selectedClassId))
+            .map(cc => cc.subjectId);
+        return subjects.filter(subject => teacherSubjectIds.includes(subject.id));
+    }
+    const curriculumForClass = classCurriculum.filter(c => c.classId === parseInt(selectedClassId));
+    return subjects.filter(subject =>
       curriculumForClass.some(c => c.subjectId === subject.id)
     );
-  }, [selectedClassId]);
+  }, [selectedClassId, classCurriculum, subjects, loggedInTeacher, teacherCurriculum]);
+  
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('');
+  
+  const studentsInClass = useMemo(() => {
+    if (!selectedClassId) return [];
+    return students.filter(student => student.classId === parseInt(selectedClassId));
+  }, [selectedClassId, students]);
 
   useEffect(() => {
-    // Auto-select first subject when class changes
-    if (subjectsForClass.length > 0) {
-      if (!subjectsForClass.some(s => s.id.toString() === selectedSubjectId)) {
+    if (classesToDisplay.length > 0 && !selectedClassId) {
+        setSelectedClassId(classesToDisplay[0].id.toString());
+    }
+  }, [classesToDisplay, selectedClassId]);
+
+  useEffect(() => {
+    if (subjectsForClass.length > 0 && !subjectsForClass.some(s => s.id.toString() === selectedSubjectId)) {
         setSelectedSubjectId(subjectsForClass[0].id.toString());
-      }
-    } else {
-      setSelectedSubjectId('');
+    } else if (subjectsForClass.length === 0) {
+        setSelectedSubjectId('');
     }
   }, [selectedClassId, subjectsForClass, selectedSubjectId]);
 
   useEffect(() => {
-    // Reset and initialize attendance when class, subject or date changes
     const initialAttendance: { [studentId: number]: AttendanceStatus } = {};
     studentsInClass.forEach(student => {
       initialAttendance[student.id] = 'Presente';
@@ -48,10 +81,7 @@ const Attendance: React.FC = () => {
   }, [studentsInClass, selectedDate, selectedSubjectId]);
 
   const handleStatusChange = (studentId: number, status: AttendanceStatus) => {
-    setAttendance(prev => ({
-      ...prev,
-      [studentId]: status,
-    }));
+    setAttendance(prev => ({ ...prev, [studentId]: status }));
   };
   
   const handleSave = () => {
@@ -77,7 +107,7 @@ const Attendance: React.FC = () => {
               onChange={(e) => setSelectedClassId(e.target.value)}
               className="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light bg-white dark:bg-slate-700 dark:text-slate-100"
             >
-              {CLASSES_DATA.map(cls => (
+              {classesToDisplay.map(cls => (
                 <option key={cls.id} value={cls.id}>{cls.name}</option>
               ))}
             </select>

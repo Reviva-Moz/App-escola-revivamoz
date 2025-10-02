@@ -53,6 +53,7 @@ export interface Staff {
     phone: string;
     status: 'Ativo' | 'Inativo';
     nuit?: string;
+    photoUrl?: string;
 }
 
 export interface Subject {
@@ -102,7 +103,9 @@ export interface Tuition {
     month: string;
     dueDate: string;
     amount: number;
-    status: 'Pago' | 'Atrasado' | 'Pendente';
+    status: 'Pago' | 'Atrasado' | 'Pendente' | 'Em Cobrança';
+    reminderScheduledAt?: string; // ISO string for scheduled date and time
+    reminderType?: 'whatsapp' | 'sms' | null;
 }
 
 export interface GradeRecord {
@@ -227,7 +230,57 @@ export interface PaymentMethod {
   status: 'Ativo' | 'Inativo';
 }
 
+export interface Activity {
+  id: number;
+  type: 'new_student' | 'new_teacher' | 'payment' | 'announcement';
+  description: string;
+  date: string; // ISO string date
+  link?: string;
+}
+
+export interface AttendanceRecord {
+  id: number;
+  studentId: number;
+  date: string; // YYYY-MM-DD
+  status: 'Presente' | 'Ausente' | 'Justificado';
+  subjectId: number;
+}
+
+export interface CustomInputField {
+  id: string;
+  label: string;
+  placeholder: string;
+  type: 'text' | 'textarea';
+}
+
+export interface AIConfiguration {
+  trainingText: string;
+  input_fields: CustomInputField[];
+}
+
+export interface AnalyzedStudent {
+  studentId: number;
+  name: string;
+  class: string;
+  reason: string;
+  recommendation: string;
+}
+
+export interface PredictiveAnalysisResult {
+  atRiskStudents: AnalyzedStudent[];
+  highPerformingStudents: AnalyzedStudent[];
+  generalRecommendations: string[];
+}
+
+export interface MessageTemplate {
+    id: number;
+    name: string;
+    shortcut: string;
+    content: string;
+}
+
 export interface DataContextType {
+  isLoading: boolean;
   students: Student[];
   teachers: Teacher[];
   staff: Staff[];
@@ -248,7 +301,14 @@ export interface DataContextType {
   classCurriculum: ClassCurriculum[];
   studentScholarships: StudentScholarship[];
   tuition: Tuition[];
+  attendance: AttendanceRecord[];
+  activities: Activity[];
+  aiConfiguration: AIConfiguration;
+  messageTemplates: MessageTemplate[];
   // CRUD functions
+  addStudent: (student: Omit<Student, 'id' | 'class'>) => void;
+  updateStudent: (student: Omit<Student, 'id' | 'class'>) => void;
+  deleteStudent: (id: number) => void;
   addTeacher: (teacher: Omit<Teacher, 'id'>) => void;
   updateTeacher: (teacher: Teacher) => void;
   deleteTeacher: (id: number) => void;
@@ -265,4 +325,5 @@ export interface DataContextType {
   addUser: (user: Omit<UserAccount, 'id'|'lastLogin'>) => void;
   updateUser: (user: UserAccount) => void;
   deleteUser: (id: number) => void;
+  updateAIConfiguration: (config: AIConfiguration) => void;
 }

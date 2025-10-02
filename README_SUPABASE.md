@@ -38,6 +38,12 @@ Execute os seguintes ficheiros SQL no **SQL Editor** do seu projeto Supabase, **
     ```env
     VITE_SUPABASE_URL="A_SUA_PROJECT_URL_AQUI"
     VITE_SUPABASE_ANON_KEY="A_SUA_CHAVE_ANON_PUBLIC_AQUI"
+    
+    # Chaves para APIs de Comunicação
+    VITE_EVOLUTION_API_URL="URL_DA_SUA_INSTANCIA_EVOLUTION_API"
+    VITE_EVOLUTION_API_KEY="A_SUA_CHAVE_DA_API_EVOLUTION"
+    VITE_SMS_GATEWAY_URL="URL_DO_SEU_GATEWAY_DE_SMS"
+    VITE_SMS_GATEWAY_KEY="A_SUA_CHAVE_DA_API_DE_SMS"
     ```
 
 4.  **Reinicie a Aplicação:** Se a aplicação estiver em execução, pare e reinicie o servidor para que as novas variáveis de ambiente sejam carregadas.
@@ -46,76 +52,142 @@ A sua aplicação está agora conectada ao Supabase!
 
 ---
 
-## 🗂️ Visão Geral do Schema da Base de Dados
+## 🔌 Conexão na Aplicação
 
-O `schema.sql` cria as seguintes tabelas principais:
-
-*   `students`: Armazena os dados dos alunos.
-*   `teachers`: Armazena os dados dos professores.
-*   `classes`: Define as turmas do ano letivo e o seu professor principal.
-*   `subjects`: Lista de todas as disciplinas.
-*   `class_curriculum`: Tabela de ligação que associa disciplinas e professores a cada turma.
-*   `transactions`: O livro-razão, regista todas as transações financeiras.
-*   `financial_categories`: Categorias para as transações (ex: Mensalidades, Salários).
-*   `scholarships`: Define os tipos de bolsas de estudo.
-*   `student_scholarships`: Tabela de ligação que atribui bolsas a alunos.
-*   `grades`: Armazena as notas dos alunos por disciplina.
-*   `calendar_events`: Regista todos os eventos do calendário.
-*   ... entre outras.
-
----
-
-##  Scripts SQL Explicados
-
-*   **`sql/schema.sql`:** O "plano" da sua base de dados. Define a estrutura e as regras de integridade dos dados. É o primeiro a ser executado e só precisa de ser executado uma vez.
-*   **`sql/data.sql`:** O "conteúdo" inicial. Preenche a estrutura vazia com dados para que a aplicação possa ser usada imediatamente.
-*   **`sql/permissions.sql`:** O "segurança". Este script é especial porque é **dinâmico**. Ele encontra todas as tabelas e aplica uma política aberta. Pode ser executado a qualquer momento para "resetar" as permissões para o estado de desenvolvimento aberto.
+*   O ficheiro `utils/supabase.ts` é responsável por inicializar o cliente Supabase usando as variáveis de ambiente.
+*   **Mecanismo de Fallback:** Se as variáveis `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY` não estiverem definidas, o cliente Supabase não é criado, e a aplicação utiliza automaticamente os dados estáticos do ficheiro `constants.ts`. Isto permite que a aplicação continue a funcionar em modo de demonstração, mesmo sem uma conexão à base de dados.
 
 ---
 
 ## 🔒 Segurança: Row Level Security (RLS)
 
-A RLS é uma funcionalidade poderosa do PostgreSQL que permite controlar o acesso a linhas específicas de uma tabela.
+A RLS é uma funcionalidade poderosa do PostgreSQL que permite controlar o acesso a linhas específicas de uma tabela. É **essencial** para um ambiente de produção.
 
-### Política de Desenvolvimento (Atual)
+### Política de Desenvolvimento (Padrão)
 
-O script `permissions.sql` implementa a seguinte política em **todas** as tabelas:
+Para simplificar o desenvolvimento, o script `permissions.sql` aplica uma política aberta que permite acesso total a qualquer utilizador. **NÃO USE ISTO EM PRODUÇÃO.**
 
-```sql
-CREATE POLICY "Public full access"
-ON public.nome_da_tabela
-FOR ALL
-USING (true)
-WITH CHECK (true);
-```
+### Políticas para Produção (Recomendado)
 
-*   **O que significa?** Permite que **qualquer pessoa** (incluindo utilizadores não autenticados que usam a `anon key`) possa ler, criar, atualizar e apagar qualquer registo.
-*   **Porquê?** Simplifica drasticamente a fase de desenvolvimento e prototipagem, permitindo que agentes de IA e programadores interajam com a base de dados sem restrições.
+Para um ambiente de produção seguro, as políticas abertas devem ser removidas e substituídas por regras granulares. O script abaixo implementa um conjunto robusto de políticas de segurança.
 
-### Políticas para Produção (Próximos Passos)
-
-Quando a aplicação for para produção, estas políticas **DEVEM** ser substituídas por regras mais restritivas. Exemplos:
-
-*   **Acesso apenas a utilizadores autenticados:**
-    ```sql
-    -- Substituir (true) por (auth.role() = 'authenticated')
-    CREATE POLICY "Permitir acesso a utilizadores logados"
-    ON public.students FOR ALL
-    TO authenticated
-    USING (true) WITH CHECK (true);
-    ```
-
-*   **Um professor só pode ver os alunos da sua turma:**
-    ```sql
-    CREATE POLICY "Professores podem ver os seus próprios alunos"
-    ON public.students FOR SELECT
-    TO authenticated
-    USING (class_id IN (SELECT class_id FROM class_curriculum WHERE teacher_id = auth.uid()));
-    ```
+**Como usar:**
+1.  Execute a secção "Pré-requisitos" uma única vez.
+2.  Remova as políticas de desenvolvimento anteriores.
+3.  Execute a secção "Políticas de Acesso" no seu SQL Editor.
 
 ---
 
-## 🔌 Conexão na Aplicação
+### Script SQL para Políticas de Produção
 
-*   O ficheiro `utils/supabase.ts` é responsável por inicializar o cliente Supabase usando as variáveis de ambiente.
-*   **Mecanismo de Fallback:** Se as variáveis `VITE_SUPABASE_URL` ou `VITE_SUPABASE_ANON_KEY` não estiverem definidas, o cliente Supabase não é criado, e a aplicação utiliza automaticamente os dados estáticos do ficheiro `constants.ts`. Isto permite que a aplicação continue a funcionar em modo de demonstração, mesmo sem uma conexão à base de dados.
+```sql
+/*********************************************************************
+* PARTE 1: PRÉ-REQUISITOS (EXECUTAR UMA VEZ)
+* Cria uma tabela `profiles` para mapear utilizadores do Supabase Auth
+* a perfis internos da aplicação (aluno, professor, etc.).
+*********************************************************************/
+
+-- 1. Criar a tabela de perfis
+CREATE TABLE public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  role public.user_role NOT NULL,
+  student_id INT REFERENCES public.students(id) ON DELETE SET NULL,
+  teacher_id INT REFERENCES public.teachers(id) ON DELETE SET NULL,
+  staff_id INT REFERENCES public.staff(id) ON DELETE SET NULL
+);
+COMMENT ON TABLE public.profiles IS 'Mapeia utilizadores do sistema de autenticação a perfis internos da aplicação.';
+
+-- 2. Função para criar um perfil quando um novo utilizador se regista
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, role)
+  VALUES (new.id, new.raw_user_meta_data->>'role');
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 3. Trigger que chama a função após cada novo registo
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- 4. Habilitar RLS na tabela de perfis
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- 5. Políticas para a tabela de perfis
+CREATE POLICY "Users can access their own profile."
+ON public.profiles FOR SELECT
+USING (auth.uid() = id);
+
+CREATE POLICY "Admins can manage all profiles."
+ON public.profiles FOR ALL
+USING ( (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'ADMINISTRADOR' );
+
+/*********************************************************************
+* PARTE 2: POLÍTICAS DE ACESSO (REMOVER POLÍTICAS ANTIGAS PRIMEIRO)
+* Aplica RLS a todas as tabelas principais da aplicação.
+*********************************************************************/
+
+-- Função auxiliar para obter o perfil do utilizador atual
+CREATE OR REPLACE FUNCTION public.get_user_profile()
+RETURNS public.profiles AS $$
+  SELECT * FROM public.profiles WHERE id = auth.uid();
+$$ LANGUAGE sql STABLE;
+
+
+-- Tabela: students
+ALTER TABLE public.students ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins/Secretaria can see all students." ON public.students FOR SELECT USING ( (get_user_profile()).role IN ('ADMINISTRADOR', 'DIRETORIA', 'SECRETARIA') );
+CREATE POLICY "Teachers can see students in their classes." ON public.students FOR SELECT USING ( class_id IN (SELECT class_id FROM public.class_curriculum WHERE teacher_id = (get_user_profile()).teacher_id) );
+CREATE POLICY "Students/Guardians can see their own profile." ON public.students FOR SELECT USING ( id = (get_user_profile()).student_id );
+CREATE POLICY "Admins/Secretaria can manage students." ON public.students FOR ALL USING ( (get_user_profile()).role IN ('ADMINISTRADOR', 'SECRETARIA') );
+
+-- Tabela: grades
+ALTER TABLE public.grades ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins/Diretoria/Secretaria can see all grades." ON public.grades FOR SELECT USING ( (get_user_profile()).role IN ('ADMINISTRADOR', 'DIRETORIA', 'SECRETARIA') );
+CREATE POLICY "Students can see their own grades." ON public.grades FOR SELECT USING ( student_id = (get_user_profile()).student_id );
+CREATE POLICY "Teachers can manage grades for their classes." ON public.grades FOR ALL USING (
+  student_id IN (SELECT id FROM public.students WHERE class_id IN (SELECT class_id FROM public.class_curriculum WHERE teacher_id = (get_user_profile()).teacher_id))
+);
+
+-- Tabela: attendance
+ALTER TABLE public.attendance ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admins/Diretoria/Secretaria can see all attendance." ON public.attendance FOR SELECT USING ( (get_user_profile()).role IN ('ADMINISTRADOR', 'DIRETORIA', 'SECRETARIA') );
+CREATE POLICY "Students can see their own attendance." ON public.attendance FOR SELECT USING ( student_id = (get_user_profile()).student_id );
+CREATE POLICY "Teachers can manage attendance for their classes." ON public.attendance FOR ALL USING (
+  student_id IN (SELECT id FROM public.students WHERE class_id IN (SELECT class_id FROM public.class_curriculum WHERE teacher_id = (get_user_profile()).teacher_id))
+);
+
+-- Tabela: lesson_plans
+ALTER TABLE public.lesson_plans ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Teachers can manage their own lesson plans." ON public.lesson_plans FOR ALL
+USING (
+  (SELECT teacher_id FROM public.class_curriculum WHERE class_curriculum.class_id = lesson_plans.class_id AND class_curriculum.subject_id = lesson_plans.subject_id) = (get_user_profile()).teacher_id
+);
+CREATE POLICY "Admins/Diretoria can see all lesson plans." ON public.lesson_plans FOR SELECT USING ( (get_user_profile()).role IN ('ADMINISTRADOR', 'DIRETORIA') );
+
+-- Tabela: teachers (Permitir que todos vejam, mas apenas admins/professores editem)
+ALTER TABLE public.teachers ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Authenticated users can see teachers." ON public.teachers FOR SELECT USING ( auth.role() = 'authenticated' );
+CREATE POLICY "Teachers can update their own profile." ON public.teachers FOR UPDATE USING ( id = (get_user_profile()).teacher_id );
+CREATE POLICY "Admins can manage teachers." ON public.teachers FOR ALL USING ( (get_user_profile()).role = 'ADMINISTRADOR' );
+
+-- Aplicar uma política de "apenas leitura" para utilizadores autenticados em tabelas públicas
+ALTER TABLE public.classes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.subjects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.calendar_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Authenticated users can view public info." ON public.classes FOR SELECT USING ( auth.role() = 'authenticated' );
+CREATE POLICY "Authenticated users can view public info." ON public.subjects FOR SELECT USING ( auth.role() = 'authenticated' );
+CREATE POLICY "Authenticated users can view public info." ON public.calendar_events FOR SELECT USING ( auth.role() = 'authenticated' );
+
+-- Acesso administrativo total para tabelas de configuração
+ALTER TABLE public.class_curriculum ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.scholarships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.student_scholarships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.financial_categories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Admin roles have full access." ON public.class_curriculum FOR ALL USING ( (get_user_profile()).role IN ('ADMINISTRADOR', 'SECRETARIA') );
+CREATE POLICY "Admin roles have full access." ON public.scholarships FOR ALL USING ( (get_user_profile()).role IN ('ADMINISTRADOR', 'SECRETARIA') );
+CREATE POLICY "Admin roles have full access." ON public.student_scholarships FOR ALL USING ( (get_user_profile()).role IN ('ADMINISTRADOR', 'SECRETARIA') );
+CREATE POLICY "Admin roles have full access." ON public.financial_categories FOR ALL USING ( (get_user_profile()).role IN ('ADMINISTRADOR', 'SECRETARIA') );
+```
