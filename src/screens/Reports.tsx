@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import PageHeader from '../components/Header';
 import { Card } from '../components/ui/Card';
@@ -127,7 +129,9 @@ const Reports: React.FC = () => {
                     responseSchema: responseSchema,
                 }
             });
-            
+
+            // FIX: Per the guidelines, response.text should be a string.
+            // Using String() handles potential typing issues where it is inferred as 'unknown'.
             const result = JSON.parse(String(response.text).trim()) as PredictiveAnalysisResult;
             setPredictiveData(result);
 

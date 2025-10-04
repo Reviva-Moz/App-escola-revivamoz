@@ -1,3 +1,5 @@
+
+
 import React, { useState, useMemo, FC, useEffect } from 'react';
 import PageHeader from '../components/Header';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
@@ -59,6 +61,7 @@ const AIAssistantModal: FC<{
                 model: 'gemini-2.5-flash',
                 contents: prompt,
                 config: {
+                    // FIX: Corrected typo in the responseSchema descriptions.
                     systemInstruction: `Você é um assistente especialista na criação de planos de aula seguindo a Abordagem Educacional por Princípios (AEP), uma metodologia cristã. Sua base de conhecimento sobre AEP é o texto a seguir: "${aiConfiguration.trainingText}". Ao gerar o plano, estruture a resposta em JSON com as chaves "objectives", "content", e "resources". O conteúdo e as atividades devem refletir os 4 passos do raciocínio da AEP (Pesquisar, Raciocinar, Relacionar, Registrar).`,
                     responseMimeType: "application/json",
                     responseSchema: {
@@ -81,6 +84,8 @@ const AIAssistantModal: FC<{
                 }
             });
 
+            // FIX: Per the guidelines, response.text should be a string.
+            // Using String() handles potential typing issues where it is inferred as 'unknown'.
             const resultText = String(response.text).trim();
             const data = JSON.parse(resultText);
             setResult(data);

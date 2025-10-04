@@ -9,13 +9,13 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useData } from '../context/DataContext';
 
 type Tab = 'catalog' | 'loans';
 
 const Library: React.FC = () => {
-    const { books, bookLoans, students } = useData(); // TODO: Add CRUD functions
+    const { books, bookLoans, students, addBook, addLoan, returnLoan, deleteBook } = useData();
     const [activeTab, setActiveTab] = useState<Tab>('catalog');
 
     // Modal States
@@ -27,8 +27,7 @@ const Library: React.FC = () => {
     const [newLoan, setNewLoan] = useState<Omit<BookLoan, 'id'|'status'>>({ bookId: 0, studentId: 0, loanDate: new Date().toISOString().split('T')[0], dueDate: '' });
     
     const handleSaveBook = () => {
-        // TODO: Call context function
-        console.log("Save book", newBook);
+        addBook(newBook);
         setBookModalOpen(false);
         setNewBook({ title: '', author: '', isbn: '', totalStock: 1 });
     };
@@ -38,19 +37,39 @@ const Library: React.FC = () => {
             alert("Preencha todos os campos.");
             return;
         }
-        // TODO: Call context function
-        console.log("Save loan", newLoan);
+        addLoan(newLoan);
         setLoanModalOpen(false);
         setNewLoan({ bookId: 0, studentId: 0, loanDate: new Date().toISOString().split('T')[0], dueDate: '' });
     };
+
+    const handleReturnLoan = (loanId: number) => {
+        if (window.confirm("Confirmar a devolução deste livro?")) {
+            returnLoan(loanId);
+        }
+    };
     
+    const handleDeleteBook = (book: Book) => {
+        const hasActiveLoans = bookLoans.some(loan => loan.bookId === book.id && loan.status !== 'Devolvido');
+        if (hasActiveLoans) {
+            alert(`Não é possível remover "${book.title}" pois existem empréstimos ativos para este livro.`);
+            return;
+        }
+        if (window.confirm(`Tem a certeza que deseja remover o livro "${book.title}" do catálogo?`)) {
+            deleteBook(book.id);
+        }
+    }
+
     const bookRows = books.map(book => [
         <span className="font-medium text-gray-900 dark:text-gray-200">{book.title}</span>,
         book.author,
         book.isbn,
         book.totalStock,
         book.availableStock,
-        <Badge variant={book.availableStock > 0 ? 'success' : 'default'}>{book.availableStock > 0 ? 'Disponível' : 'Indisponível'}</Badge>
+        <Badge variant={book.availableStock > 0 ? 'success' : 'default'}>{book.availableStock > 0 ? 'Disponível' : 'Indisponível'}</Badge>,
+        <div className="flex">
+            <Button variant="link" size="sm" onClick={() => alert('Edição de livros a ser implementada.')}><PencilIcon className="h-4 w-4 mr-1"/>Editar</Button>
+            <Button variant="link" size="sm" className="text-red-500" onClick={() => handleDeleteBook(book)}><TrashIcon className="h-4 w-4 mr-1"/>Remover</Button>
+        </div>
     ]);
     
     const getLoanStatusBadge = (status: BookLoan['status']) => {
@@ -70,14 +89,14 @@ const Library: React.FC = () => {
             loan.loanDate,
             loan.dueDate,
             getLoanStatusBadge(loan.status),
-            loan.status !== 'Devolvido' ? <Button variant="link" size="sm">Registar Devolução</Button> : null
+            loan.status !== 'Devolvido' ? <Button variant="link" size="sm" onClick={() => handleReturnLoan(loan.id)}>Registar Devolução</Button> : loan.returnDate
         ]
     });
 
     const renderContent = () => {
         switch(activeTab) {
             case 'catalog':
-                return <DataTable title="Catálogo de Livros" headers={['Título', 'Autor', 'ISBN', 'Qtd. Total', 'Qtd. Disponível', 'Status']} rows={bookRows} />;
+                return <DataTable title="Catálogo de Livros" headers={['Título', 'Autor', 'ISBN', 'Qtd. Total', 'Qtd. Disponível', 'Status', 'Ações']} rows={bookRows} />;
             case 'loans':
                 return <DataTable title="Empréstimos Atuais e Histórico" headers={['Livro', 'Aluno', 'Data de Empréstimo', 'Data de Devolução', 'Status', 'Ações']} rows={loanRows} />;
         }

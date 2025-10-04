@@ -1,3 +1,5 @@
+
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
@@ -11,7 +13,7 @@ const ClassDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const classId = parseInt(id || '0');
-    const { classes, subjects, teachers, classCurriculum } = useData(); // TODO: Add update functions
+    const { classes, subjects, teachers, classCurriculum, updateClassCurriculum } = useData();
 
     const classInfo = useMemo(() => classes.find(c => c.id === classId), [classId, classes]);
 
@@ -40,17 +42,17 @@ const ClassDetails: React.FC = () => {
             alert('Esta disciplina já foi adicionada a esta turma.');
             return;
         }
-
-        // TODO: Call context function to update curriculum
-        setCurrentCurriculum([...currentCurriculum, newEntry]);
+        
+        const updatedCurriculum = [...currentCurriculum, newEntry];
+        updateClassCurriculum(classId, updatedCurriculum);
         setSelectedSubject('');
         setSelectedTeacher('');
     };
 
     const handleRemove = (subjectIdToRemove: number) => {
         if (window.confirm('Tem a certeza que deseja remover esta disciplina do plano da turma?')) {
-            // TODO: Call context function to update curriculum
-            setCurrentCurriculum(currentCurriculum.filter(item => item.subjectId !== subjectIdToRemove));
+            const updatedCurriculum = currentCurriculum.filter(item => item.subjectId !== subjectIdToRemove);
+            updateClassCurriculum(classId, updatedCurriculum);
         }
     };
 

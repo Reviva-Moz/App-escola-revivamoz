@@ -8,13 +8,14 @@ import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { PlusIcon, PaperClipIcon, EyeIcon } from '@heroicons/react/24/outline';
-import { Announcement, AnnouncementCategory } from '../types';
+import { Announcement, AnnouncementCategory, Document } from '../types';
 import { Badge } from '../components/ui/Badge';
 import { TagIcon } from '../components/icons';
 import { useData } from '../context/DataContext';
+import FileUpload from '../components/ui/FileUpload';
 
 const Communication: React.FC = () => {
-    const { announcements, classes } = useData(); // TODO: Add save function
+    const { announcements, classes, updateAnnouncement } = useData(); 
     const [localAnnouncements, setLocalAnnouncements] = useState<Announcement[]>(announcements);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filter, setFilter] = useState<AnnouncementCategory | 'Todos'>('Todos');
@@ -24,7 +25,7 @@ const Communication: React.FC = () => {
     const [content, setContent] = useState('');
     const [target, setTarget] = useState('Todos');
     const [category, setCategory] = useState<AnnouncementCategory>('Informativo');
-    const [attachments, setAttachments] = useState('');
+    const [attachments, setAttachments] = useState<Document[]>([]);
 
     const filteredAnnouncements = useMemo(() => {
         if (filter === 'Todos') {
@@ -34,8 +35,6 @@ const Communication: React.FC = () => {
     }, [localAnnouncements, filter]);
 
     const handleSave = () => {
-        const attachmentArray = attachments.split(',').map(name => ({ name: name.trim() })).filter(att => att.name);
-
         const newAnnouncement: Announcement = {
             id: Date.now(),
             title,
@@ -43,7 +42,7 @@ const Communication: React.FC = () => {
             target,
             category,
             date: new Date().toISOString(),
-            attachments: attachmentArray.length > 0 ? attachmentArray : undefined,
+            attachments: attachments.length > 0 ? attachments : undefined,
             readBy: [],
         };
         setLocalAnnouncements(prev => [newAnnouncement, ...prev]);
@@ -53,9 +52,43 @@ const Communication: React.FC = () => {
         setContent('');
         setTarget('Todos');
         setCategory('Informativo');
-        setAttachments('');
+        setAttachments([]);
     };
     
+    const handleFileUpload = (files: File[]) => {
+        const newDocuments: Document[] = files.map(file => ({
+            name: file.name,
+            size: file.size,
+            url: URL.createObjectURL(file), // Temporary URL for display
+            uploadedAt: new Date().toISOString(),
+        }));
+        setAttachments(prev => [...prev, ...newDocuments]);
+    };
+    
+    const removeDocument = (docToRemove: Document) => {
+        setAttachments(prev => prev.filter(doc => doc.name !== docToRemove.name));
+    };
+
+    const handleMarkAsRead = (announcementId: number) => {
+        const announcement = localAnnouncements.find(a => a.id === announcementId);
+        if (!announcement) return;
+        
+        // Mocking user ID as 1 (admin) for demo purposes
+        const userId = 1; 
+        if (announcement.readBy?.includes(userId)) {
+             alert('Já marcou este aviso como lido.');
+             return;
+        }
+        
+        const updatedAnnouncement = {
+            ...announcement,
+            readBy: [...(announcement.readBy || []), userId]
+        };
+        
+        updateAnnouncement(updatedAnnouncement);
+        setLocalAnnouncements(prev => prev.map(a => a.id === announcementId ? updatedAnnouncement : a));
+    };
+
     const categoryBadgeVariant = (cat: AnnouncementCategory) => {
         switch(cat) {
             case 'Urgente': return 'destructive' as const;
@@ -106,7 +139,7 @@ const Communication: React.FC = () => {
                                     <h4 className="font-semibold text-sm mb-1">Anexos:</h4>
                                     <div className="flex flex-wrap gap-2">
                                         {announcement.attachments.map(att => (
-                                            <a href="#" key={att.name} className="flex items-center gap-2 text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600">
+                                            <a href={att.url} download={att.name} key={att.name} className="flex items-center gap-2 text-sm bg-slate-100 dark:bg-slate-700 p-2 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600">
                                                 <PaperClipIcon className="h-4 w-4"/>
                                                 <span>{att.name}</span>
                                             </a>
@@ -126,7 +159,7 @@ const Communication: React.FC = () => {
                                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 mt-2 sm:mt-0">
                                    <EyeIcon className="h-4 w-4"/>
                                    <span>Visto por {announcement.readBy?.length || 0} pessoas</span>
-                                    <Button variant="link" size="sm" className="p-0 h-auto">Marcar como lido</Button>
+                                    <Button variant="link" size="sm" className="p-0 h-auto" onClick={() => handleMarkAsRead(announcement.id)}>Marcar como lido</Button>
                                </div>
                             </div>
                         </div>
@@ -172,7 +205,20 @@ const Communication: React.FC = () => {
                             className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-reviva-green-light focus:border-reviva-green-light"
                         />
                     </div>
-                     <Input id="attachments" label="Anexos (separados por vírgula)" placeholder="ex: documento.pdf, imagem.png" value={attachments} onChange={e => setAttachments(e.target.value)} />
+                     <div>
+                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Anexos</label>
+                        <FileUpload onFileUpload={handleFileUpload} multiple={true} />
+                         {attachments.length > 0 && (
+                            <ul className="mt-2 space-y-1 text-sm">
+                                {attachments.map(doc => (
+                                    <li key={doc.name} className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-1 rounded">
+                                        <span>{doc.name}</span>
+                                        <Button type="button" variant="ghost" size="sm" className="text-red-500" onClick={() => removeDocument(doc)}>Remover</Button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </div>
 
                     <div className="flex justify-end gap-4 pt-4">
                         <Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button>

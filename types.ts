@@ -14,6 +14,13 @@ export interface UserAccount {
   lastLogin: string;
 }
 
+export interface Document {
+  name: string;
+  size: number; // in bytes
+  url: string; // can be a data URL or a mock URL
+  uploadedAt: string; // ISO string date
+}
+
 export interface Student {
   id: number;
   name: string;
@@ -32,6 +39,7 @@ export interface Student {
   nuit?: string;
   healthNotes?: string;
   photoUrl?: string;
+  documents?: Document[];
 }
 
 export interface Teacher {
@@ -42,6 +50,7 @@ export interface Teacher {
     qualifications: string;
     status: 'Ativo' | 'Inativo';
     photoUrl?: string;
+    documents?: Document[];
 }
 
 export interface Staff {
@@ -54,6 +63,7 @@ export interface Staff {
     status: 'Ativo' | 'Inativo';
     nuit?: string;
     photoUrl?: string;
+    documents?: Document[];
 }
 
 export interface Subject {
@@ -170,8 +180,8 @@ export interface Announcement {
   target: 'Todos' | 'Professores' | 'Pais' | string; // string for specific class
   category: AnnouncementCategory;
   date: string; // ISO string date
-  attachments?: { name: string }[];
-  readBy?: number[];
+  attachments?: Document[];
+  readBy?: number[]; // Mock user IDs
 }
 
 export interface Book {
@@ -305,9 +315,11 @@ export interface DataContextType {
   activities: Activity[];
   aiConfiguration: AIConfiguration;
   messageTemplates: MessageTemplate[];
+  paymentMethods: PaymentMethod[];
+  
   // CRUD functions
   addStudent: (student: Omit<Student, 'id' | 'class'>) => void;
-  updateStudent: (student: Omit<Student, 'id' | 'class'>) => void;
+  updateStudent: (student: Omit<Student, 'id' | 'class'> & { id: number }) => void;
   deleteStudent: (id: number) => void;
   addTeacher: (teacher: Omit<Teacher, 'id'>) => void;
   updateTeacher: (teacher: Teacher) => void;
@@ -316,7 +328,7 @@ export interface DataContextType {
   updateStaff: (staffMember: Staff) => void;
   deleteStaff: (id: number) => void;
   addClass: (classData: Omit<Class, 'id'| 'teacherName' | 'studentCount'>) => void;
-  updateClass: (classData: Omit<Class, 'teacherName' | 'studentCount'>) => void;
+  updateClass: (classData: Omit<Class, 'teacherName' | 'studentCount'> & { id: number }) => void;
   deleteClass: (id: number) => void;
   addSubject: (subject: Omit<Subject, 'id'>) => void;
   updateSubject: (subject: Subject) => void;
@@ -326,4 +338,36 @@ export interface DataContextType {
   updateUser: (user: UserAccount) => void;
   deleteUser: (id: number) => void;
   updateAIConfiguration: (config: AIConfiguration) => void;
+  
+  // New full CRUD functions
+  updateClassCurriculum: (classId: number, curriculum: ClassCurriculum[]) => void;
+  
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  updateTransaction: (transaction: Transaction) => void;
+  deleteTransaction: (id: number) => void;
+  
+  addCategory: (category: Omit<Category, 'id'>) => void;
+  updateCategory: (category: Category) => void;
+  deleteCategory: (id: number) => void;
+  
+  addScholarship: (scholarship: Omit<Scholarship, 'id'>) => void;
+  updateScholarship: (scholarship: Scholarship) => void;
+  deleteScholarship: (id: number) => void;
+  
+  addPaymentMethod: (method: Omit<PaymentMethod, 'id'>) => void;
+  updatePaymentMethod: (method: PaymentMethod) => void;
+  deletePaymentMethod: (id: number) => void;
+
+  addMessageTemplate: (template: Omit<MessageTemplate, 'id'>) => void;
+  updateMessageTemplate: (template: MessageTemplate) => void;
+  deleteMessageTemplate: (id: number) => void;
+
+  addBook: (book: Omit<Book, 'id' | 'availableStock'>) => void;
+  updateBook: (book: Book) => void;
+  deleteBook: (id: number) => void;
+
+  addLoan: (loan: Omit<BookLoan, 'id' | 'status'>) => void;
+  returnLoan: (loanId: number) => void;
+  
+  updateAnnouncement: (announcement: Announcement) => void;
 }

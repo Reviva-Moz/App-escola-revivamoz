@@ -8,20 +8,94 @@ import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { PlusIcon, UserPlusIcon, UsersIcon, BookOpenIcon, MagnifyingGlassIcon, BellIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline';
-import { Badge } from '../../components/ui/Badge';
+import { Modal } from '../../components/ui/Modal';
+import { Student, Teacher, Staff } from '../../types';
 import QuickLinkCard from '../../components/dashboards/QuickLinkCard';
 import StatCard from '../../components/StatCard';
 
+const SearchResultsModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    searchTerm: string;
+    results: { students: Student[], teachers: Teacher[], staff: Staff[] };
+}> = ({ isOpen, onClose, searchTerm, results }) => {
+    const navigate = useNavigate();
+
+    const handleNavigate = (path: string) => {
+        navigate(path);
+        onClose();
+    };
+
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title={`Resultados da Pesquisa por "${searchTerm}"`}>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+                <div>
+                    <h3 className="font-bold text-lg mb-2">Alunos ({results.students.length})</h3>
+                    {results.students.length > 0 ? (
+                        <ul className="space-y-1">
+                            {results.students.map(s => (
+                                <li key={s.id} className="flex justify-between items-center p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
+                                    <span>{s.name} - {s.class}</span>
+                                    <Button variant="link" size="sm" onClick={() => handleNavigate(`/alunos/${s.id}/editar`)}>Ver Perfil</Button>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : <p className="text-sm text-slate-500">Nenhum aluno encontrado.</p>}
+                </div>
+                 <div>
+                    <h3 className="font-bold text-lg mb-2">Professores ({results.teachers.length})</h3>
+                    {results.teachers.length > 0 ? (
+                        <ul className="space-y-1">
+                            {results.teachers.map(t => (
+                                <li key={t.id} className="flex justify-between items-center p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
+                                    <span>{t.name}</span>
+                                    <Button variant="link" size="sm" onClick={() => handleNavigate(`/professores/${t.id}/editar`)}>Ver Perfil</Button>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : <p className="text-sm text-slate-500">Nenhum professor encontrado.</p>}
+                </div>
+                 <div>
+                    <h3 className="font-bold text-lg mb-2">Colaboradores ({results.staff.length})</h3>
+                     {results.staff.length > 0 ? (
+                        <ul className="space-y-1">
+                            {results.staff.map(st => (
+                                <li key={st.id} className="flex justify-between items-center p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded">
+                                    <span>{st.name} - {st.role}</span>
+                                    <Button variant="link" size="sm" onClick={() => handleNavigate(`/colaboradores/${st.id}/editar`)}>Ver Perfil</Button>
+                                </li>
+                            ))}
+                        </ul>
+                    ) : <p className="text-sm text-slate-500">Nenhum colaborador encontrado.</p>}
+                </div>
+            </div>
+        </Modal>
+    );
+};
+
 const SecretariaDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const { announcements, students, activities, calendarEvents } = useData();
+    const { announcements, students, teachers, staff, activities, calendarEvents } = useData();
     const [searchTerm, setSearchTerm] = useState('');
+    const [isSearchModalOpen, setSearchModalOpen] = useState(false);
+
+    const searchResults = useMemo(() => {
+        if (!searchTerm) return { students: [], teachers: [], staff: [] };
+        const lowercasedTerm = searchTerm.toLowerCase();
+        return {
+            students: students.filter(s => s.name.toLowerCase().includes(lowercasedTerm)),
+            teachers: teachers.filter(t => t.name.toLowerCase().includes(lowercasedTerm)),
+            staff: staff.filter(s => s.name.toLowerCase().includes(lowercasedTerm)),
+        };
+    }, [searchTerm, students, teachers, staff]);
 
     const upcomingEvents = calendarEvents.filter(e => new Date(e.date) >= new Date()).slice(0, 4);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        alert(`A pesquisar por: "${searchTerm}"... (funcionalidade a implementar)`);
+        if (searchTerm.trim()) {
+            setSearchModalOpen(true);
+        }
     };
     
     const ActivityIcon = ({ type }: { type: string }) => {
@@ -124,6 +198,13 @@ const SecretariaDashboard: React.FC = () => {
                     </Card>
                 </div>
             </div>
+            
+            <SearchResultsModal
+                isOpen={isSearchModalOpen}
+                onClose={() => setSearchModalOpen(false)}
+                searchTerm={searchTerm}
+                results={searchResults}
+            />
         </>
     );
 };

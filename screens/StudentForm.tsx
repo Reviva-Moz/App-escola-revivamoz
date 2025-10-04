@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
@@ -9,7 +10,8 @@ import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import WebcamCapture from '../components/WebcamCapture';
 import { useData } from '../context/DataContext';
-import { Student } from '../types';
+import { Student, Document } from '../types';
+import FileUpload from '../components/ui/FileUpload';
 
 const StudentForm: React.FC = () => {
     const { id } = useParams();
@@ -28,6 +30,7 @@ const StudentForm: React.FC = () => {
         nuit: '',
         healthNotes: '',
         photoUrl: '',
+        documents: [],
     });
 
     const [loading, setLoading] = useState(true);
@@ -39,7 +42,7 @@ const StudentForm: React.FC = () => {
             if (studentData) {
                 // Omit 'class' property when setting form state
                 const { class: _, ...rest } = studentData;
-                setFormState(rest);
+                setFormState({ documents: [], ...rest });
             } else {
                  setFormError("Não foi possível encontrar os dados do aluno.");
             }
@@ -54,6 +57,20 @@ const StudentForm: React.FC = () => {
 
     const handlePhotoCapture = (imageDataUrl: string) => {
         setFormState(prev => ({ ...prev, photoUrl: imageDataUrl }));
+    };
+
+    const handleFileUpload = (files: File[]) => {
+        const newDocuments: Document[] = files.map(file => ({
+            name: file.name,
+            size: file.size,
+            url: URL.createObjectURL(file), // Temporary URL for display
+            uploadedAt: new Date().toISOString(),
+        }));
+        setFormState(prev => ({ ...prev, documents: [...(prev.documents || []), ...newDocuments]}));
+    };
+    
+    const removeDocument = (docToRemove: Document) => {
+        setFormState(prev => ({ ...prev, documents: prev.documents?.filter(doc => doc.name !== docToRemove.name)}));
     };
 
     const title = isEditing ? 'Editar Aluno' : 'Cadastrar Novo Aluno';
@@ -99,7 +116,7 @@ const StudentForm: React.FC = () => {
             
             <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-2 space-y-8">
                         <Card className="p-6">
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                 <h3 className="md:col-span-2 text-xl font-semibold text-slate-800 dark:text-slate-200 border-b-2 border-reviva-green pb-2">Dados Pessoais e Académicos</h3>
@@ -122,6 +139,20 @@ const StudentForm: React.FC = () => {
                                     <textarea id="healthNotes" rows={4} value={formState.healthNotes} onChange={handleChange} className="w-full p-2 border border-slate-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg"></textarea>
                                 </div>
                             </div>
+                        </Card>
+                         <Card className="p-6">
+                            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 border-b-2 border-reviva-green pb-2 mb-4">Documentos</h3>
+                            <FileUpload onFileUpload={handleFileUpload} multiple={true} />
+                            {formState.documents && formState.documents.length > 0 && (
+                                <ul className="mt-4 space-y-2">
+                                    {formState.documents.map(doc => (
+                                        <li key={doc.name} className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-2 rounded">
+                                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">{doc.name}</a>
+                                            <Button type="button" variant="ghost" size="sm" className="text-red-500" onClick={() => removeDocument(doc)}>Remover</Button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </Card>
                     </div>
                     <div>

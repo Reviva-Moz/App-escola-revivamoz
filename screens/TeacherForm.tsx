@@ -9,8 +9,9 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { useData } from '../context/DataContext';
-import { Teacher } from '../types';
+import { Teacher, Document } from '../types';
 import WebcamCapture from '../components/WebcamCapture';
+import FileUpload from '../components/ui/FileUpload';
 
 const TeacherForm: React.FC = () => {
     const { id } = useParams();
@@ -25,13 +26,14 @@ const TeacherForm: React.FC = () => {
         qualifications: '',
         status: 'Ativo',
         photoUrl: '',
+        documents: [],
     });
 
     useEffect(() => {
         if (isEditing && id) {
             const teacherData = teachers.find(t => t.id === parseInt(id));
             if (teacherData) {
-                setFormState(teacherData);
+                setFormState({ documents: [], ...teacherData });
             }
         }
     }, [id, isEditing, teachers]);
@@ -43,6 +45,20 @@ const TeacherForm: React.FC = () => {
     
     const handlePhotoCapture = (imageDataUrl: string) => {
         setFormState(prev => ({ ...prev, photoUrl: imageDataUrl }));
+    };
+
+    const handleFileUpload = (files: File[]) => {
+        const newDocuments: Document[] = files.map(file => ({
+            name: file.name,
+            size: file.size,
+            url: URL.createObjectURL(file),
+            uploadedAt: new Date().toISOString(),
+        }));
+        setFormState(prev => ({ ...prev, documents: [...(prev.documents || []), ...newDocuments]}));
+    };
+
+     const removeDocument = (docToRemove: Document) => {
+        setFormState(prev => ({ ...prev, documents: prev.documents?.filter(doc => doc.name !== docToRemove.name)}));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -69,7 +85,7 @@ const TeacherForm: React.FC = () => {
             
              <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2">
+                    <div className="lg:col-span-2 space-y-8">
                         <Card className="p-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <h3 className="md:col-span-2 text-xl font-semibold text-slate-800 dark:text-slate-200 border-b-2 border-reviva-green pb-2">Dados Pessoais e Contato</h3>
@@ -84,6 +100,20 @@ const TeacherForm: React.FC = () => {
                                     <option value="Inativo">Inativo</option>
                                 </Select>
                             </div>
+                        </Card>
+                         <Card className="p-6">
+                            <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 border-b-2 border-reviva-green pb-2 mb-4">Documentos</h3>
+                            <FileUpload onFileUpload={handleFileUpload} multiple={true} />
+                            {formState.documents && formState.documents.length > 0 && (
+                                <ul className="mt-4 space-y-2">
+                                    {formState.documents.map(doc => (
+                                        <li key={doc.name} className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-2 rounded">
+                                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">{doc.name}</a>
+                                            <Button type="button" variant="ghost" size="sm" className="text-red-500" onClick={() => removeDocument(doc)}>Remover</Button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </Card>
                     </div>
                     <div>

@@ -303,6 +303,7 @@ export const ANNOUNCEMENTS_DATA: Announcement[] = [
         target: 'Todos',
         category: 'Evento',
         date: '2024-06-18T15:30:00.000Z',
+// FIX: The Document type requires size, url, and uploadedAt properties. Adding dummy values.
         attachments: [{ name: 'Convite_Festa.pdf', size: 123456, url: '', uploadedAt: new Date().toISOString() }],
         readBy: [1, 2, 3, 4, 5, 6, 101, 102, 103, 104, 105, 106, 107]
     },

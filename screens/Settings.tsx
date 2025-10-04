@@ -1,4 +1,5 @@
 
+
 import React, { useState, FC, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../components/Header';
@@ -58,6 +59,25 @@ const UserFormModal: FC<{
     )
 };
 
+const ResetPasswordModal: FC<{
+    user: UserAccount | null;
+    isOpen: boolean;
+    onClose: () => void;
+    onConfirm: () => void;
+}> = ({ user, isOpen, onClose, onConfirm }) => {
+    if (!isOpen || !user) return null;
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title="Redefinir Senha">
+            <p>Tem a certeza que deseja redefinir a senha para o utilizador <strong>{user.email}</strong>?</p>
+            <p className="text-sm text-slate-500 mt-2">Uma nova senha será gerada e um link de redefinição (simulado) será enviado para o email do utilizador.</p>
+            <div className="flex justify-end gap-4 pt-6">
+                <Button variant="secondary" onClick={onClose}>Cancelar</Button>
+                <Button onClick={onConfirm} className="bg-red-600 hover:bg-red-700">Sim, Redefinir</Button>
+            </div>
+        </Modal>
+    );
+};
+
 
 const Settings: React.FC = () => {
   const { systemSettings, users, updateSettings, addUser, updateUser, deleteUser } = useData();
@@ -66,6 +86,7 @@ const Settings: React.FC = () => {
   const [settings, setSettings] = useState<SystemSettings>(systemSettings);
   const [isUserModalOpen, setUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<UserAccount | null>(null);
+  const [userToReset, setUserToReset] = useState<UserAccount | null>(null);
 
   useEffect(() => {
       setSettings(systemSettings);
@@ -110,6 +131,13 @@ const Settings: React.FC = () => {
     setUserModalOpen(false);
   };
   
+  const handleConfirmReset = () => {
+    if (userToReset) {
+        alert(`Um email de redefinição de senha foi enviado para ${userToReset.email}.`);
+        setUserToReset(null);
+    }
+  };
+
   const roleVariantMapping = {
     ADMINISTRADOR: 'destructive' as const,
     DIRETORIA: 'default' as const,
@@ -125,7 +153,7 @@ const Settings: React.FC = () => {
     new Date(user.lastLogin).toLocaleString('pt-MZ'),
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1">
         <Button variant="link" size="sm" onClick={() => handleEditUser(user)}><PencilIcon className="h-4 w-4 mr-1"/>Editar</Button>
-        <Button variant="link" size="sm" onClick={() => alert(`A ação de reset de senha para ${user.email} seria enviada aqui.`)}><KeyIcon className="h-4 w-4 mr-1"/> Reset</Button>
+        <Button variant="link" size="sm" onClick={() => setUserToReset(user)}><KeyIcon className="h-4 w-4 mr-1"/> Reset</Button>
         <Button variant="link" size="sm" className="text-red-500" onClick={() => handleDeleteUser(user.id)}><TrashIcon className="h-4 w-4 mr-1"/>Remover</Button>
     </div>
   ]);
@@ -191,6 +219,13 @@ const Settings: React.FC = () => {
         onClose={() => setUserModalOpen(false)}
         user={editingUser}
         onSave={handleSaveUser}
+      />
+
+      <ResetPasswordModal
+        isOpen={!!userToReset}
+        onClose={() => setUserToReset(null)}
+        user={userToReset}
+        onConfirm={handleConfirmReset}
       />
     </>
   );
