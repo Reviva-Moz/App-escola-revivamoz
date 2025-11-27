@@ -7,12 +7,12 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { TrashIcon, PlusIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { useData } from '../context/DataContext';
+import { useAdminData } from '../context/AdminContext';
 import { AIConfiguration, CustomInputField } from '../types';
 
 const AIConfiguration: React.FC = () => {
     const navigate = useNavigate();
-    const { aiConfiguration, updateAIConfiguration } = useData();
+    const { aiConfiguration, updateAIConfiguration } = useAdminData();
     const [config, setConfig] = useState<AIConfiguration>(aiConfiguration);
 
     useEffect(() => {

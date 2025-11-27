@@ -1,15 +1,16 @@
 
 
 import React, { useState } from 'react';
-import PageHeader from '../components/Header';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { STUDENTS_DATA, TEACHERS_DATA, FINANCIAL_SUMMARY, REVENUE_CATEGORIES, EXPENSE_CATEGORIES } from '../constants';
-import { Student, Teacher, FinancialCategory, PredictiveAnalysisResult, GradeRecord } from '../types';
-import { formatCurrency, calculateAverage } from '../utils/formatters';
+import PageHeader from '@/components/Header';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { STUDENTS_DATA, TEACHERS_DATA, FINANCIAL_SUMMARY, REVENUE_CATEGORIES, EXPENSE_CATEGORIES } from '@/constants';
+import { Student, Teacher, FinancialCategory, PredictiveAnalysisResult, GradeRecord } from '@/types';
+import { formatCurrency, calculateAverage } from '@/utils/formatters';
 import { XMarkIcon, PrinterIcon } from '@heroicons/react/24/solid';
-import { useData } from '../context/DataContext';
-import { SparklesIcon, DocumentArrowDownIcon } from '../components/icons';
+import { useCoreData } from '@/context/CoreDataContext';
+import { useAcademicData } from '@/context/AcademicContext';
+import { SparklesIcon, DocumentArrowDownIcon } from '@/components/icons';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -18,7 +19,8 @@ import html2canvas from 'html2canvas';
 type ReportType = 'students' | 'teachers' | 'financial' | null;
 
 const Reports: React.FC = () => {
-    const { students, grades, attendance, classes } = useData();
+    const { students, classes } = useCoreData();
+    const { grades, attendance } = useAcademicData();
     const [activeReport, setActiveReport] = useState<ReportType>(null);
     const [reportData, setReportData] = useState<any>(null);
 
@@ -130,9 +132,7 @@ const Reports: React.FC = () => {
                 }
             });
 
-            // FIX: Per the guidelines, response.text should be a string.
-            // Using String() handles potential typing issues where it is inferred as 'unknown'.
-            const result = JSON.parse(String(response.text).trim()) as PredictiveAnalysisResult;
+            const result = JSON.parse(response.text.trim()) as PredictiveAnalysisResult;
             setPredictiveData(result);
 
         } catch (err) {

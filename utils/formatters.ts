@@ -1,5 +1,5 @@
 
-import { GradeRecord } from '../types';
+import { GradeRecord } from '@/types';
 
 export const formatCurrency = (value: number): string => {
   return new Intl.NumberFormat('pt-MZ', {

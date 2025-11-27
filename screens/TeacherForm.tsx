@@ -2,22 +2,23 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import PageHeader from '../components/Header';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { Select } from '../components/ui/Select';
-import { useData } from '../context/DataContext';
-import { Teacher, Document } from '../types';
-import WebcamCapture from '../components/WebcamCapture';
-import FileUpload from '../components/ui/FileUpload';
+import PageHeader from '@/components/Header';
+import { ArrowLeftIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
+import { useCoreData } from '@/context/CoreDataContext';
+import { Teacher, Document, ClassCurriculum } from '@/types';
+import WebcamCapture from '@/components/WebcamCapture';
+import FileUpload from '@/components/ui/FileUpload';
 
 const TeacherForm: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { teachers, addTeacher, updateTeacher } = useData();
+    const { teachers, addTeacher, updateTeacher, classes, subjects, classCurriculum, updateTeacherAssignments } = useCoreData();
     const isEditing = Boolean(id);
+    const teacherId = isEditing ? parseInt(id!) : null;
 
     const [formState, setFormState] = useState<Omit<Teacher, 'id'>>({
         name: '',
@@ -28,15 +29,23 @@ const TeacherForm: React.FC = () => {
         photoUrl: '',
         documents: [],
     });
+    const [error, setError] = useState<string>('');
+    const [assignments, setAssignments] = useState<{ classId: number; subjectId: number; }[]>([]);
+    const [selectedClass, setSelectedClass] = useState('');
+    const [selectedSubject, setSelectedSubject] = useState('');
 
     useEffect(() => {
-        if (isEditing && id) {
-            const teacherData = teachers.find(t => t.id === parseInt(id));
+        if (isEditing && teacherId) {
+            const teacherData = teachers.find(t => t.id === teacherId);
             if (teacherData) {
                 setFormState({ documents: [], ...teacherData });
+                const teacherAssignments = classCurriculum
+                    .filter(cc => cc.teacherId === teacherId)
+                    .map(({ classId, subjectId }) => ({ classId, subjectId }));
+                setAssignments(teacherAssignments);
             }
         }
-    }, [id, isEditing, teachers]);
+    }, [id, isEditing, teachers, classCurriculum]);
     
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -60,19 +69,64 @@ const TeacherForm: React.FC = () => {
      const removeDocument = (docToRemove: Document) => {
         setFormState(prev => ({ ...prev, documents: prev.documents?.filter(doc => doc.name !== docToRemove.name)}));
     };
+    
+    const handleAddAssignment = () => {
+        if (!selectedClass || !selectedSubject) {
+            alert("Selecione uma turma e uma disciplina.");
+            return;
+        }
+        const newAssignment = { classId: parseInt(selectedClass), subjectId: parseInt(selectedSubject) };
+
+        if (assignments.some(a => a.classId === newAssignment.classId && a.subjectId === newAssignment.subjectId)) {
+            alert("Esta atribuição já existe.");
+            return;
+        }
+        setAssignments(prev => [...prev, newAssignment]);
+        setSelectedSubject(''); 
+    };
+
+    const handleRemoveAssignment = (index: number) => {
+        setAssignments(prev => prev.filter((_, i) => i !== index));
+    };
+    
+    // Subjects available for assignment in the selected class
+    const availableSubjects = React.useMemo(() => {
+        if (!selectedClass) return [];
+        const classId = parseInt(selectedClass);
+        const assignedSubjectsInClass = classCurriculum
+            .filter(cc => cc.classId === classId && cc.teacherId !== teacherId)
+            .map(cc => cc.subjectId);
+            
+        return subjects.filter(s => !assignedSubjectsInClass.includes(s.id));
+    }, [selectedClass, classCurriculum, subjects, teacherId]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (isEditing && id) {
-            updateTeacher({ id: parseInt(id), ...formState });
+        setError('');
+
+        const emailExists = teachers.some(
+            teacher =>
+                teacher.email.toLowerCase() === formState.email.toLowerCase() &&
+                (!id || teacher.id !== parseInt(id))
+        );
+
+        if (emailExists) {
+            setError('Este email já está a ser utilizado por outro professor.');
+            return;
+        }
+
+        if (isEditing && teacherId) {
+            updateTeacher({ id: teacherId, ...formState });
+            updateTeacherAssignments(teacherId, assignments);
         } else {
+            // Note: Assignment management is only available when editing
             addTeacher(formState);
         }
         navigate('/professores');
     };
 
     const title = isEditing ? 'Editar Professor' : 'Cadastrar Novo Professor';
-    const subtitle = isEditing ? 'Atualize as informações do professor' : 'Preencha os dados para criar um novo registo';
+    const subtitle = isEditing ? 'Atualize as informações e atribuições do professor' : 'Preencha os dados para criar um novo registo';
     
     return (
         <>
@@ -101,6 +155,39 @@ const TeacherForm: React.FC = () => {
                                 </Select>
                             </div>
                         </Card>
+
+                        {isEditing && (
+                             <Card className="p-6">
+                                <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 border-b-2 border-reviva-green pb-2 mb-6">Atribuição de Disciplinas e Turmas</h3>
+                                <div className="space-y-4">
+                                    {assignments.length > 0 && (
+                                        <ul className="space-y-2">
+                                            {assignments.map((ass, index) => (
+                                                <li key={index} className="flex justify-between items-center bg-slate-100 dark:bg-slate-700 p-2 rounded">
+                                                   <span>
+                                                        <span className="font-bold">{subjects.find(s => s.id === ass.subjectId)?.name || 'Disciplina Inválida'}</span>
+                                                        <span className="text-slate-500 dark:text-slate-400"> - {classes.find(c => c.id === ass.classId)?.name || 'Turma Inválida'}</span>
+                                                   </span>
+                                                    <Button type="button" variant="ghost" size="icon" className="text-red-500" onClick={() => handleRemoveAssignment(index)}><TrashIcon className="h-4 w-4"/></Button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                    <div className="flex flex-col sm:flex-row items-end gap-2 p-3 border-t border-slate-200 dark:border-slate-600">
+                                        <Select label="Turma" id="assign-class" value={selectedClass} onChange={e => {setSelectedClass(e.target.value); setSelectedSubject('')}}>
+                                            <option value="">Selecione...</option>
+                                            {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                        </Select>
+                                        <Select label="Disciplina" id="assign-subject" value={selectedSubject} onChange={e => setSelectedSubject(e.target.value)} disabled={!selectedClass}>
+                                            <option value="">Selecione...</option>
+                                            {availableSubjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                        </Select>
+                                        <Button type="button" onClick={handleAddAssignment} className="w-full sm:w-auto"><PlusIcon className="h-5 w-5 mr-1"/> Adicionar</Button>
+                                    </div>
+                                </div>
+                            </Card>
+                        )}
+
                          <Card className="p-6">
                             <h3 className="text-xl font-semibold text-slate-800 dark:text-slate-200 border-b-2 border-reviva-green pb-2 mb-4">Documentos</h3>
                             <FileUpload onFileUpload={handleFileUpload} multiple={true} />
@@ -126,6 +213,8 @@ const TeacherForm: React.FC = () => {
                         </Card>
                     </div>
                 </div>
+                
+                {error && <p className="text-center text-red-500 mt-4">{error}</p>}
                 
                 <div className="flex justify-end mt-8 gap-4">
                     <Button type="button" variant="secondary" onClick={() => navigate('/professores')}>

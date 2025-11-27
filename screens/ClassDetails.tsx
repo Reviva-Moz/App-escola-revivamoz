@@ -2,18 +2,18 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import PageHeader from '../components/Header';
+import PageHeader from '@/components/Header';
 import { ArrowLeftIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { ClassCurriculum } from '../types';
-import { useData } from '../context/DataContext';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { ClassCurriculum } from '@/types';
+import { useCoreData } from '@/context/CoreDataContext';
 
 const ClassDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const classId = parseInt(id || '0');
-    const { classes, subjects, teachers, classCurriculum, updateClassCurriculum } = useData();
+    const { classes, subjects, teachers, classCurriculum, updateClassCurriculum } = useCoreData();
 
     const classInfo = useMemo(() => classes.find(c => c.id === classId), [classId, classes]);
 

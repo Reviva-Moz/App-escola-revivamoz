@@ -2,18 +2,18 @@
 
 import React, { useState, FC, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageHeader from '../components/Header';
-import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { Select } from '../components/ui/Select';
-import { SystemSettings, UserAccount, UserRole } from '../types';
-import { ROLES } from '../constants';
-import DataTable from '../components/DataTable';
-import { Badge } from '../components/ui/Badge';
+import PageHeader from '@/components/Header';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
+import { SystemSettings, UserAccount, UserRole } from '@/types';
+import { ROLES } from '@/constants';
+import DataTable from '@/components/DataTable';
+import { Badge } from '@/components/ui/Badge';
 import { KeyIcon, PencilIcon, TrashIcon, PlusIcon, SparklesIcon } from '@heroicons/react/24/outline';
-import { Modal } from '../components/ui/Modal';
-import { useData } from '../context/DataContext';
+import { Modal } from '@/components/ui/Modal';
+import { useAdminData } from '@/context/AdminContext';
 
 
 const UserFormModal: FC<{
@@ -31,13 +31,14 @@ const UserFormModal: FC<{
         if(isOpen) {
             setEmail(user?.email || '');
             setRole(user?.role || 'ALUNO');
-            setPassword('');
+            setPassword(user?.password || '');
         }
     }, [user, isOpen]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({ id: user?.id, email, role });
+        // Pass password if creating or if updating and password was provided
+        onSave({ id: user?.id, email, role, password: password || undefined });
     }
 
     return (
@@ -47,10 +48,8 @@ const UserFormModal: FC<{
                 <Select id="role" label="Perfil de Acesso" value={role} onChange={e => setRole(e.target.value as UserRole)} required>
                     {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                 </Select>
-                {!isEditing && (
-                    <Input id="password" label="Senha" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-                )}
-                 <div className="flex justify-end gap-4 pt-4">
+                <Input id="password" label={isEditing ? "Nova Senha (deixe em branco para manter)" : "Senha"} type="password" value={password} onChange={e => setPassword(e.target.value)} required={!isEditing} />
+                <div className="flex justify-end gap-4 pt-4">
                     <Button type="button" variant="secondary" onClick={onClose}>Cancelar</Button>
                     <Button type="submit">Salvar</Button>
                 </div>
@@ -80,7 +79,7 @@ const ResetPasswordModal: FC<{
 
 
 const Settings: React.FC = () => {
-  const { systemSettings, users, updateSettings, addUser, updateUser, deleteUser } = useData();
+  const { systemSettings, users, updateSettings, addUser, updateUser, deleteUser } = useAdminData();
   const navigate = useNavigate();
 
   const [settings, setSettings] = useState<SystemSettings>(systemSettings);
@@ -123,10 +122,17 @@ const Settings: React.FC = () => {
     if (userData.id) { // Editing
         const existingUser = users.find(u => u.id === userData.id);
         if(existingUser) {
-            updateUser({ ...existingUser, role: userData.role });
+            const updatedUser: UserAccount = {
+                ...existingUser,
+                role: userData.role,
+            };
+            if (userData.password) {
+                updatedUser.password = userData.password;
+            }
+            updateUser(updatedUser);
         }
     } else { // Adding
-        addUser({ email: userData.email, role: userData.role });
+        addUser({ email: userData.email, role: userData.role, password: userData.password });
     }
     setUserModalOpen(false);
   };

@@ -1,9 +1,12 @@
 
 
+
+
 import React, { useMemo, useState, FC } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/Header';
-import { useData } from '../../context/DataContext';
+import { useCoreData } from '../../context/CoreDataContext';
+import { useAcademicData } from '../../context/AcademicContext';
 import { useAuth } from '../../context/AuthContext';
 import { Card } from '../../components/ui/Card';
 import ProfileCard from '../../components/dashboards/ProfileCard';
@@ -14,6 +17,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cart
 import { useTheme } from '../../context/ThemeContext';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
+import { calculateAverage } from '../../utils/formatters';
 
 const InfoCard: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
     <Card>
@@ -25,23 +29,14 @@ const InfoCard: React.FC<{ title: string; icon: React.ReactNode; children: React
     </Card>
 );
 
-const calculateAverage = (gradeRecord: GradeRecord | undefined): number | null => {
-    if (!gradeRecord) return null;
-    const notes = [gradeRecord.nota1, gradeRecord.nota2, gradeRecord.finalExam];
-    const validNotes = notes.map(n => parseFloat(String(n))).filter(n => !isNaN(n) && n >= 0 && n <= 20);
-    if (validNotes.length === 0) return null;
-    const sum = validNotes.reduce((acc, curr) => acc + curr, 0);
-    return sum / validNotes.length;
-};
-
-
 const ClassReportModal: FC<{
     isOpen: boolean;
     onClose: () => void;
     classInfo: Class | undefined;
     teacherId: number | undefined;
 }> = ({ isOpen, onClose, classInfo, teacherId }) => {
-    const { students, grades, subjects, classCurriculum } = useData();
+    const { students, subjects, classCurriculum } = useCoreData();
+    const { grades } = useAcademicData();
 
     const reportData = useMemo(() => {
         if (!classInfo || !teacherId) return { students: [], subjects: [] };
@@ -118,7 +113,8 @@ const ProfessorDashboard: React.FC = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
     const { theme } = useTheme();
-    const { teachers, classes, classCurriculum, lessonPlans, subjects, students, grades } = useData();
+    const { teachers, classes, classCurriculum, subjects, students } = useCoreData();
+    const { lessonPlans, grades } = useAcademicData();
     
     const [isReportModalOpen, setReportModalOpen] = useState(false);
     const [selectedClassForReport, setSelectedClassForReport] = useState<Class | undefined>(undefined);

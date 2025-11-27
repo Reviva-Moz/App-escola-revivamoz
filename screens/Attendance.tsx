@@ -1,17 +1,22 @@
 
+
+
+
 import React, { useState, useMemo, useEffect } from 'react';
-import PageHeader from '../components/Header';
-import { Student } from '../types';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { useData } from '../context/DataContext';
-import { useAuth } from '../context/AuthContext';
+import PageHeader from '@/components/Header';
+import { Student, AttendanceRecord } from '@/types';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { useCoreData } from '@/context/CoreDataContext';
+import { useAcademicData } from '@/context/AcademicContext';
+import { useAuth } from '@/context/AuthContext';
 
 type AttendanceStatus = 'Presente' | 'Ausente' | 'Justificado';
 
 const Attendance: React.FC = () => {
   const { user } = useAuth();
-  const { classes, students, subjects, classCurriculum, teachers } = useData();
+  const { classes, students, subjects, classCurriculum, teachers } = useCoreData();
+  const { saveAttendance } = useAcademicData();
 
   const today = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState<string>(today);
@@ -89,7 +94,15 @@ const Attendance: React.FC = () => {
         alert('Por favor, selecione uma disciplina.');
         return;
     }
-    console.log('Saving attendance for', selectedDate, 'in class', selectedClassId, 'subject', selectedSubjectId, ':', attendance);
+    
+    const recordsToSave = Object.entries(attendance).map(([studentId, status]) => ({
+        studentId: parseInt(studentId),
+        date: selectedDate,
+        status: status,
+        subjectId: parseInt(selectedSubjectId)
+    }));
+
+    saveAttendance(recordsToSave);
     alert('Presença salva com sucesso!');
   }
 

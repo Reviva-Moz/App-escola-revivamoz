@@ -1,6 +1,9 @@
 
 
 
+
+
+
 import React, { useState, useMemo, FC, useEffect } from 'react';
 import { CalendarEvent, Class, Subject } from '../types';
 import PageHeader from '../components/Header';
@@ -9,7 +12,8 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/solid';
-import { useData } from '../context/DataContext';
+import { useCoreData } from '../context/CoreDataContext';
+import { useAcademicData } from '../context/AcademicContext';
 import { useAuth } from '../context/AuthContext';
 
 
@@ -20,7 +24,7 @@ const ProvaModal: FC<{
     onSave: (event: Omit<CalendarEvent, 'id' | 'createdAt' | 'type'> & { id?: number }) => void;
     onDelete: (id: number) => void;
 }> = ({ event, isOpen, onClose, onSave, onDelete }) => {
-    const { classes, subjects, teachers, classCurriculum } = useData();
+    const { classes, subjects, teachers, classCurriculum } = useCoreData();
     const { user } = useAuth();
 
     const [title, setTitle] = useState('');
@@ -134,9 +138,13 @@ const ProvaModal: FC<{
 
 
 const ProvaCalendar: React.FC = () => {
-    const { calendarEvents: initialEvents } = useData();
+    const { calendarEvents, addEvent, updateEvent, deleteEvent } = useAcademicData();
+    const { classes } = useCoreData();
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [events, setEvents] = useState<CalendarEvent[]>(initialEvents);
+    
+    // Filter for Provas only
+    const provas = useMemo(() => calendarEvents.filter(e => e.type === 'Prova'), [calendarEvents]);
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<Partial<CalendarEvent> | null>(null);
 
@@ -176,30 +184,22 @@ const ProvaCalendar: React.FC = () => {
     };
 
     const handleSaveEvent = (eventData: Omit<CalendarEvent, 'id' | 'createdAt' | 'type'> & { id?: number }) => {
-        const { classes } = useData();
         const fullEventData = { ...eventData, type: 'Prova' as const };
         if (fullEventData.id) {
-            setEvents(events.map(e => e.id === fullEventData.id ? { ...e, ...fullEventData } : e));
+            updateEvent({ ...fullEventData, id: fullEventData.id, createdAt: new Date().toISOString() });
         } else {
-            const newEvent: CalendarEvent = {
-                ...fullEventData,
-                id: Math.max(0, ...events.map(e => e.id)) + 1,
-                createdAt: new Date().toISOString(),
-            };
-            setEvents([...events, newEvent]);
+            addEvent(fullEventData);
         }
         handleCloseModal();
     };
 
     const handleDeleteEvent = (id: number) => {
         if (window.confirm("Tem a certeza que deseja remover esta prova?")) {
-            setEvents(events.filter(e => e.id !== id));
+            deleteEvent(id);
             handleCloseModal();
         }
     };
     
-    const provas = useMemo(() => events.filter(e => e.type === 'Prova'), [events]);
-
     return (
         <>
             <PageHeader title="Calendário de Provas" subtitle="Organize e visualize o cronograma de avaliações">
@@ -242,7 +242,7 @@ const ProvaCalendar: React.FC = () => {
                                             {dayEvents.map(event => (
                                                 <button key={event.id} onClick={() => handleEditEvent(event)} className="w-full text-left p-1 rounded-md bg-yellow-100 dark:bg-yellow-900/50 hover:bg-yellow-200 dark:hover:bg-yellow-900/80">
                                                     <p className="text-xs font-semibold text-yellow-800 dark:text-yellow-200 truncate">{event.title}</p>
-                                                    <p className="text-xs text-yellow-700 dark:text-yellow-300/80 truncate">{useData().classes.find(c => c.id === event.classId)?.name}</p>
+                                                    <p className="text-xs text-yellow-700 dark:text-yellow-300/80 truncate">{classes.find(c => c.id === event.classId)?.name}</p>
                                                 </button>
                                             ))}
                                         </div>

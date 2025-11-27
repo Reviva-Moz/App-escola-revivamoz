@@ -1,8 +1,10 @@
 
 
+
+
 import React, { useState, useMemo, FC, useEffect } from 'react';
 import { CalendarEvent } from '../types';
-import { CALENDAR_EVENTS_DATA, CLASS_CURRICULUM_DATA, CLASSES_DATA, SUBJECTS_DATA, LESSON_PLANS_DATA } from '../constants';
+import { CLASS_CURRICULUM_DATA, CLASSES_DATA, SUBJECTS_DATA, LESSON_PLANS_DATA } from '../constants';
 import PageHeader from '../components/Header';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -11,6 +13,8 @@ import { Badge } from '../components/ui/Badge';
 import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, PencilIcon, TrashIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import { Select } from '../components/ui/Select';
 import { useAuth } from '../context/AuthContext';
+import { useAcademicData } from '@/context/AcademicContext';
+import { useCoreData } from '@/context/CoreDataContext';
 
 const eventTypeClasses: { [key in CalendarEvent['type']]: string } = {
     Feriado: 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300 border-red-300 dark:border-red-500/50',
@@ -107,7 +111,7 @@ const EventModal: FC<{
     );
 };
 
-const CalendarWeeklyView: FC<{ currentDate: Date, events: CalendarEvent[], onEditEvent: (event: CalendarEvent) => void }> = ({ currentDate, events, onEditEvent }) => {
+const CalendarWeeklyView: FC<{ currentDate: Date, events: CalendarEvent[], onEditEvent: (event: CalendarEvent) => void, classes: any[] }> = ({ currentDate, events, onEditEvent, classes }) => {
     const weekDays = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     
     const startOfWeek = new Date(currentDate);
@@ -139,7 +143,7 @@ const CalendarWeeklyView: FC<{ currentDate: Date, events: CalendarEvent[], onEdi
                             {dayEvents.map(event => (
                                 <button key={event.id} onClick={() => onEditEvent(event)} className={`w-full text-left p-2 rounded-md text-xs border-l-4 ${eventTypeClasses[event.type]} transition-transform hover:scale-105`}>
                                     <p className="font-bold">{event.title}</p>
-                                    <p className="opacity-80">{CLASSES_DATA.find(c => c.id === event.classId)?.name}</p>
+                                    <p className="opacity-80">{classes.find(c => c.id === event.classId)?.name}</p>
                                 </button>
                             ))}
                         </div>
@@ -153,11 +157,16 @@ const CalendarWeeklyView: FC<{ currentDate: Date, events: CalendarEvent[], onEdi
 
 const Calendar: React.FC = () => {
     const { user } = useAuth();
+    const { classes, classCurriculum, teachers, subjects } = useCoreData();
+    const { calendarEvents, addEvent, updateEvent, deleteEvent } = useAcademicData();
+    
     const isTeacher = user?.role === 'PROFESSOR';
-    const TEACHER_ID = 1; // Demo teacher ID (Carlos Neto)
+    const teacherId = useMemo(() => {
+        if (!isTeacher) return null;
+        return teachers.find(t => t.email === user?.email)?.id;
+    }, [isTeacher, teachers, user]);
 
     const [currentDate, setCurrentDate] = useState(new Date());
-    const [events, setEvents] = useState<CalendarEvent[]>(CALENDAR_EVENTS_DATA);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<Partial<CalendarEvent> | null>(null);
     const [view, setView] = useState<'month' | 'week'>('month');
@@ -175,48 +184,24 @@ const Calendar: React.FC = () => {
         let allEvents: CalendarEvent[] = [];
 
         // --- Process original calendar events ---
-        if (isTeacher) {
+        if (isTeacher && teacherId) {
             const teacherClassIds = Array.from(new Set(
-                CLASS_CURRICULUM_DATA
-                    .filter(c => c.teacherId === TEACHER_ID)
+                classCurriculum
+                    .filter(c => c.teacherId === teacherId)
                     .map(c => c.classId)
             ));
             
-            const calendarEventsForTeacher = events.filter(event => {
-                if (event.type !== 'Prova') return true;
+            const calendarEventsForTeacher = calendarEvents.filter(event => {
+                if (event.type !== 'Prova') return true; // General events
                 return event.classId ? teacherClassIds.includes(event.classId) : false;
             });
             allEvents = allEvents.concat(calendarEventsForTeacher);
         } else {
-            allEvents = allEvents.concat(events);
+            allEvents = allEvents.concat(calendarEvents);
         }
 
-        // --- Process and add lesson plans for teacher ---
-        if (isTeacher) {
-            const teacherLessonPlans: CalendarEvent[] = LESSON_PLANS_DATA
-                .map(plan => {
-                    const curriculumEntry = CLASS_CURRICULUM_DATA.find(
-                        c => c.classId === plan.classId && c.subjectId === plan.subjectId
-                    );
-                    return { ...plan, teacherId: curriculumEntry?.teacherId };
-                })
-                .filter(plan => plan.teacherId === TEACHER_ID)
-                .map(plan => ({
-                    id: plan.id + 1000, // Avoid ID collision
-                    title: plan.title,
-                    date: plan.date,
-                    type: 'Plano de Aula',
-                    description: `Aula de ${SUBJECTS_DATA.find(s => s.id === plan.subjectId)?.name || ''} para ${CLASSES_DATA.find(c => c.id === plan.classId)?.name || ''}`,
-                    createdAt: new Date().toISOString(), // dummy date
-                    classId: plan.classId,
-                    subjectId: plan.subjectId,
-                }));
-            
-            allEvents = allEvents.concat(teacherLessonPlans);
-        }
-        
         return allEvents;
-    }, [events, isTeacher]);
+    }, [calendarEvents, isTeacher, teacherId, classCurriculum]);
 
     const daysInMonth = useMemo(() => {
         const days = [];
@@ -261,7 +246,6 @@ const Calendar: React.FC = () => {
 
     const handleEditEvent = (event: CalendarEvent) => {
         if (event.type === 'Plano de Aula') {
-            // Future enhancement: navigate to lesson plan editor
             alert(`Visualizando detalhes do plano de aula:\n\n${event.title}\n${event.description}`);
             return;
         }
@@ -276,21 +260,16 @@ const Calendar: React.FC = () => {
 
     const handleSaveEvent = (eventData: Omit<CalendarEvent, 'id' | 'createdAt'> & { id?: number }) => {
         if (eventData.id) {
-            setEvents(events.map(e => e.id === eventData.id ? { ...e, ...eventData } : e));
+            updateEvent({ ...eventData, id: eventData.id, createdAt: new Date().toISOString() }); // preserve createdAt or update it?
         } else {
-            const newEvent: CalendarEvent = {
-                ...eventData,
-                id: Math.max(0, ...events.map(e => e.id)) + 1,
-                createdAt: new Date().toISOString(),
-            };
-            setEvents([...events, newEvent]);
+            addEvent(eventData);
         }
         handleCloseModal();
     };
 
     const handleDeleteEvent = (id: number) => {
         if (window.confirm("Tem a certeza que deseja remover este evento?")) {
-            setEvents(events.filter(e => e.id !== id));
+            deleteEvent(id);
             handleCloseModal();
         }
     };
@@ -358,7 +337,7 @@ const Calendar: React.FC = () => {
                             </Button>
                         </div>
                         {view === 'week' ? (
-                           <CalendarWeeklyView currentDate={currentDate} events={filteredEvents} onEditEvent={handleEditEvent}/>
+                           <CalendarWeeklyView currentDate={currentDate} events={filteredEvents} onEditEvent={handleEditEvent} classes={classes}/>
                         ) : (
                             <>
                                 <div className="grid grid-cols-7 text-center font-semibold text-slate-600 dark:text-slate-400 border-b dark:border-slate-700">

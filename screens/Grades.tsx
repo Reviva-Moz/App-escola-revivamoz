@@ -1,5 +1,8 @@
 
 
+
+
+
 import React, { useState, useMemo, useEffect, FC } from 'react';
 import PageHeader from '../components/Header';
 import { StudentGrades, GradeRecord, Student, Subject } from '../types';
@@ -8,7 +11,8 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { PencilSquareIcon } from '../components/icons';
-import { useData } from '../context/DataContext';
+import { useCoreData } from '../context/CoreDataContext';
+import { useAcademicData } from '../context/AcademicContext';
 import { useAuth } from '../context/AuthContext';
 import { calculateAverage } from '../utils/formatters';
 
@@ -77,8 +81,9 @@ const BoletimModal: FC<{
 
 const Grades: React.FC = () => {
     const { user } = useAuth();
-    const { classes, subjects, students, grades: initialGradesData, classCurriculum, teachers } = useData();
-    const [gradesData, setGradesData] = useState<StudentGrades[]>(initialGradesData);
+    const { classes, subjects, students, classCurriculum, teachers } = useCoreData();
+    const { grades, updateGrade } = useAcademicData();
+    
     const [isBoletimModalOpen, setBoletimModalOpen] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
@@ -138,31 +143,15 @@ const Grades: React.FC = () => {
 
     const handleGradeChange = (studentId: number, field: keyof GradeRecord, value: string) => {
         if (!selectedSubjectId) return;
-
-        setGradesData(prevData => {
-            const newData = [...prevData];
-            let studentGrades = newData.find(sg => sg.studentId === studentId);
-
-            if (!studentGrades) {
-                studentGrades = { studentId, gradesBySubject: {} };
-                newData.push(studentGrades);
-            }
-            
-            if (!studentGrades.gradesBySubject[parseInt(selectedSubjectId)]) {
-                 studentGrades.gradesBySubject[parseInt(selectedSubjectId)] = { nota1: '', nota2: '', finalExam: '', observations: '' };
-            }
-
-            const subjectGrades = studentGrades.gradesBySubject[parseInt(selectedSubjectId)];
-            
-            if (field === 'observations') {
-                subjectGrades[field] = value;
-            } else {
-                const processedValue = value === '' ? '' : Math.max(0, Math.min(20, parseFloat(value) || 0));
-                subjectGrades[field] = processedValue as (number | string); // Ensure type correctness
-            }
-            
-            return newData;
-        });
+        
+        // Persist directly using Context (which handles API + optimistic update)
+        // For numeric fields, parse safely
+        let processedValue: string | number = value;
+        if (field !== 'observations') {
+             processedValue = value === '' ? '' : Math.max(0, Math.min(20, parseFloat(value) || 0));
+        }
+        
+        updateGrade(studentId, parseInt(selectedSubjectId), field, processedValue);
     };
     
     const handleOpenBoletim = (studentId: number) => {
@@ -229,7 +218,7 @@ const Grades: React.FC = () => {
                         </thead>
                         <tbody>
                             {studentsInClass.map(student => {
-                                const studentGrades = gradesData.find(sg => sg.studentId === student.id);
+                                const studentGrades = grades.find(sg => sg.studentId === student.id);
                                 const currentGrades = selectedSubjectId ? studentGrades?.gradesBySubject[parseInt(selectedSubjectId)] : undefined;
                                 const average = calculateAverage(currentGrades)?.toFixed(2) ?? '-';
 
@@ -245,7 +234,8 @@ const Grades: React.FC = () => {
                                                     step="0.1"
                                                     placeholder="-"
                                                     value={currentGrades?.[field] ?? ''}
-                                                    onChange={(e) => handleGradeChange(student.id, field, e.target.value)}
+                                                    onBlur={(e) => handleGradeChange(student.id, field, e.target.value)}
+                                                    onChange={(e) => { /* Managed by onBlur for API, could enable local state for smoother typing if needed */ }}
                                                     className="w-24 text-center p-1 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-reviva-green-light focus:border-reviva-green-light bg-white dark:bg-slate-700 dark:text-slate-100"
                                                     disabled={!selectedSubjectId}
                                                 />
@@ -259,7 +249,8 @@ const Grades: React.FC = () => {
                                                 type="text"
                                                 placeholder="Adicionar observação..."
                                                 value={currentGrades?.observations ?? ''}
-                                                onChange={(e) => handleGradeChange(student.id, 'observations', e.target.value)}
+                                                onBlur={(e) => handleGradeChange(student.id, 'observations', e.target.value)}
+                                                onChange={() => {}}
                                                 className="w-full text-left p-1 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-reviva-green-light focus:border-reviva-green-light bg-white dark:bg-slate-700 dark:text-slate-100"
                                                 disabled={!selectedSubjectId}
                                             />
@@ -285,7 +276,7 @@ const Grades: React.FC = () => {
             {isBoletimModalOpen && selectedStudent && (
                 <BoletimModal
                     student={selectedStudent}
-                    gradesData={gradesData}
+                    gradesData={grades}
                     subjects={subjects}
                     classCurriculum={classCurriculum}
                     onClose={() => setBoletimModalOpen(false)}

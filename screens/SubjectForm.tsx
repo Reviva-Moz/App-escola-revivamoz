@@ -2,18 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import PageHeader from '../components/Header';
+import PageHeader from '@/components/Header';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { useData } from '../context/DataContext';
-import { Subject } from '../types';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { useCoreData } from '@/context/CoreDataContext';
+import { Subject } from '@/types';
 
 const SubjectForm: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { subjects, addSubject, updateSubject } = useData();
+    const { subjects, addSubject, updateSubject } = useCoreData();
     const isEditing = Boolean(id);
 
     const [formState, setFormState] = useState<Omit<Subject, 'id'>>({

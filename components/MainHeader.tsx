@@ -2,12 +2,12 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import ThemeSwitcher from './ThemeSwitcher';
 import { Button } from './ui/Button';
 import { ArrowRightOnRectangleIcon, UserCircleIcon, Bars3Icon, NoSymbolIcon } from '@heroicons/react/24/outline';
 import { Badge } from './ui/Badge';
-import { useOnlineStatus } from '../utils/useOnlineStatus';
+import { useOnlineStatus } from '@/utils/useOnlineStatus';
 
 interface MainHeaderProps {
   onMenuClick: () => void;

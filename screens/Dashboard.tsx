@@ -1,16 +1,18 @@
 
 import React from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 // Importa os novos dashboards específicos para cada perfil
 import AdminDiretoriaDashboard from './dashboards/AdminDiretoriaDashboard';
 import ProfessorDashboard from './dashboards/ProfessorDashboard';
 import SecretariaDashboard from './dashboards/SecretariaDashboard';
 import StudentDashboard from './dashboards/StudentDashboard';
-import PageHeader from '../components/Header';
+import PageHeader from '@/components/Header';
+import { useParams } from 'react-router-dom';
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
+  const params = useParams();
 
   // Componente de fallback caso o perfil não seja reconhecido
   const FallbackDashboard = () => (
@@ -19,6 +21,12 @@ const Dashboard: React.FC = () => {
 
   // Lógica para selecionar o dashboard correto com base no perfil do utilizador
   const renderDashboardByRole = () => {
+    // Se a rota for /portal-aluno/:id, renderiza o StudentDashboard independentemente do user logado
+    // (útil para secretaria/diretoria verem o portal de um aluno)
+    if (params.id) {
+      return <StudentDashboard />;
+    }
+
     switch (user?.role) {
       case 'ADMINISTRADOR':
       case 'DIRETORIA':
@@ -28,16 +36,12 @@ const Dashboard: React.FC = () => {
         return <SecretariaDashboard />;
         
       case 'PROFESSOR':
-        // Assumindo que o email do professor está no contexto de autenticação
-        // e pode ser usado para encontrar o seu ID.
-        // Para a demo, o componente ProfessorDashboard fará a correspondência.
         return <ProfessorDashboard />;
         
       case 'ALUNO':
       case 'RESPONSAVEL':
-        // A rota para o portal do aluno agora aponta para este componente
-        // O ID do aluno viria do contexto do utilizador numa aplicação real
-        // Para a demo, o StudentDashboard usará um ID fixo.
+        // Numa app real, o ID viria do objeto `user`.
+        // Para a demo, redirecionamos para um aluno fixo se nenhum ID for fornecido.
         return <StudentDashboard />;
         
       default:

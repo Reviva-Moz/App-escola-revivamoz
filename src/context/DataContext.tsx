@@ -59,7 +59,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
     const [activities, setActivities] = useState<Activity[]>([]);
     const [aiConfiguration, setAIConfiguration] = useState<AIConfiguration>(DEFAULT_AI_CONFIG);
-    const [messageTemplates, setMessageTemplates] = useState<MessageTemplate[]>(MESSAGE_TEMPLATES_DATA);
+    const [messageTemplates, setMessageTemplates] = useState<MessageTemplate[]>([]);
     const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -171,13 +171,22 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     const updateAIConfiguration = (config: AIConfiguration) => updateAndPersist('aiConfiguration', setAIConfiguration, config);
     
-// FIX: Implement all missing functions required by DataContextType to resolve the type error.
     const updateClassCurriculum = (classId: number, curriculum: ClassCurriculum[]) => setClassCurriculum(prev => {
         const otherClassCurriculum = prev.filter(cc => cc.classId !== classId);
         const newState = [...otherClassCurriculum, ...curriculum];
         saveDataToLocalDB('classCurriculum', newState);
         return newState;
     });
+
+    const updateTeacherAssignments = (teacherId: number, assignments: { classId: number, subjectId: number }[]) => {
+        setClassCurriculum(prev => {
+            const otherTeachersAssignments = prev.filter(cc => cc.teacherId !== teacherId);
+            const newAssignmentsForTeacher = assignments.map(a => ({ ...a, teacherId }));
+            const newState = [...otherTeachersAssignments, ...newAssignmentsForTeacher];
+            saveDataToLocalDB('classCurriculum', newState);
+            return newState;
+        });
+    };
 
     const addTransaction = (transaction: Omit<Transaction, 'id'>) => setTransactions(prev => { const newState = [...prev, { ...transaction, id: Date.now() }]; saveDataToLocalDB('transactions', newState); return newState; });
     const updateTransaction = (updatedTransaction: Transaction) => setTransactions(prev => { const newState = prev.map(t => t.id === updatedTransaction.id ? updatedTransaction : t); saveDataToLocalDB('transactions', newState); return newState; });
@@ -203,28 +212,40 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const updateBook = (updatedBook: Book) => setBooks(prev => { const newState = prev.map(b => b.id === updatedBook.id ? updatedBook : b); saveDataToLocalDB('books', newState); return newState; });
     const deleteBook = (id: number) => setBooks(prev => { const newState = prev.filter(b => b.id !== id); saveDataToLocalDB('books', newState); return newState; });
 
-    const addLoan = (loan: Omit<BookLoan, 'id' | 'status'>) => setBookLoans(prev => {
-        const bookToUpdate = books.find(b => b.id === loan.bookId);
-        if (bookToUpdate && bookToUpdate.availableStock > 0) {
-            updateAndPersist('books', setBooks, books.map(b => b.id === loan.bookId ? { ...b, availableStock: b.availableStock - 1 } : b));
-            const newState = [...prev, { ...loan, id: Date.now(), status: 'Em Dia' }];
-            saveDataToLocalDB('bookLoans', newState);
-            return newState;
-        }
-        return prev; // Or throw an error
-    });
-    const returnLoan = (loanId: number) => setBookLoans(prev => {
-        const loanToReturn = prev.find(l => l.id === loanId);
-        if (loanToReturn) {
-             updateAndPersist('books', setBooks, books.map(b => b.id === loanToReturn.bookId ? { ...b, availableStock: b.availableStock + 1 } : b));
-        }
-        const newState = prev.map(l => l.id === loanId ? { ...l, status: 'Devolvido', returnDate: new Date().toISOString().split('T')[0] } : l);
-        saveDataToLocalDB('bookLoans', newState); 
-        return newState;
-    });
+    const addLoan = (loan: Omit<BookLoan, 'id' | 'status'>) => {
+        setBooks(prevBooks => {
+            const bookToUpdate = prevBooks.find(b => b.id === loan.bookId);
+            if (bookToUpdate && bookToUpdate.availableStock > 0) {
+                const updatedBooks = prevBooks.map(b => b.id === loan.bookId ? { ...b, availableStock: b.availableStock - 1 } : b);
+                saveDataToLocalDB('books', updatedBooks);
+                setBookLoans(prevLoans => {
+                    const newLoanState = [...prevLoans, { ...loan, id: Date.now(), status: 'Em Dia' as const }];
+                    saveDataToLocalDB('bookLoans', newLoanState);
+                    return newLoanState;
+                });
+                return updatedBooks;
+            }
+            return prevBooks;
+        });
+    };
+    
+    const returnLoan = (loanId: number) => {
+        setBookLoans(prevLoans => {
+            const loanToReturn = prevLoans.find(l => l.id === loanId);
+            if (loanToReturn) {
+                setBooks(prevBooks => {
+                    const updatedBooks = prevBooks.map(b => b.id === loanToReturn.bookId ? { ...b, availableStock: b.availableStock + 1 } : b);
+                    saveDataToLocalDB('books', updatedBooks);
+                    return updatedBooks;
+                });
+            }
+            const newLoanState = prevLoans.map(l => l.id === loanId ? { ...l, status: 'Devolvido' as const, returnDate: new Date().toISOString().split('T')[0] } : l);
+            saveDataToLocalDB('bookLoans', newLoanState);
+            return newLoanState;
+        });
+    };
     
     const updateAnnouncement = (announcement: Announcement) => setAnnouncements(prev => { const newState = prev.map(a => a.id === announcement.id ? announcement : a); saveDataToLocalDB('announcements', newState); return newState; });
-
 
     const value: DataContextType = {
         isLoading, students, teachers, staff, subjects, classes: classesWithDetails, transactions,
@@ -235,7 +256,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         addStaff, updateStaff, deleteStaff, addClass, updateClass, deleteClass, addSubject,
         updateSubject, deleteSubject, updateSettings, addUser, updateUser, deleteUser,
         updateAIConfiguration,
-        updateClassCurriculum, addTransaction, updateTransaction, deleteTransaction,
+        updateClassCurriculum, updateTeacherAssignments, addTransaction, updateTransaction, deleteTransaction,
         addCategory, updateCategory, deleteCategory, addScholarship, updateScholarship, deleteScholarship,
         addPaymentMethod, updatePaymentMethod, deletePaymentMethod, addMessageTemplate, updateMessageTemplate,
         deleteMessageTemplate, addBook, updateBook, deleteBook, addLoan, returnLoan, updateAnnouncement

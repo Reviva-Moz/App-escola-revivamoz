@@ -1,18 +1,19 @@
-
-
 import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/Header';
 import { Card } from '../../components/ui/Card';
 import { BookOpenIcon, CalendarDaysIcon, ChartPieIcon, CurrencyDollarIcon, PlusIcon, BellIcon } from '@heroicons/react/24/outline';
 import { Button } from '../../components/ui/Button';
-import { GradeRecord, Subject, Tuition, HealthRecord, AnnouncementCategory } from '../../types';
+import { GradeRecord, Subject, Tuition, HealthRecord, AnnouncementCategory, Student } from '../../types';
 import { Badge } from '../../components/ui/Badge';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency, calculateAverage } from '../../utils/formatters';
 import { HeartIcon } from '../../components/icons';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
-import { useData } from '../../context/DataContext';
+import { useCoreData } from '../../context/CoreDataContext';
+import { useAcademicData } from '../../context/AcademicContext';
+import { useFinancialData } from '../../context/FinancialContext';
+import { useAdminData } from '../../context/AdminContext';
 import ProfileCard from '../../components/dashboards/ProfileCard';
 
 const InfoCard: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode; actions?: React.ReactNode }> = ({ title, icon, children, actions }) => (
@@ -69,10 +70,11 @@ const StudentDashboard: React.FC = () => {
     const navigate = useNavigate();
     const studentId = parseInt(id || '1');
     
-    const { 
-        students, grades: gradesData, subjects, classCurriculum, tuition, 
-        calendarEvents, healthRecords: allHealthRecords, attendance, announcements
-    } = useData();
+    const { students, subjects, classCurriculum } = useCoreData();
+    const { grades: gradesData, calendarEvents, attendance } = useAcademicData();
+    const { tuition } = useFinancialData();
+    const { healthRecords: allHealthRecords, announcements } = useAdminData();
+
 
     const [healthRecords, setHealthRecords] = useState(() => allHealthRecords.filter(r => r.studentId === studentId));
     const [isHealthModalOpen, setHealthModalOpen] = useState(false);
@@ -110,18 +112,10 @@ const StudentDashboard: React.FC = () => {
     
     const studentAnnouncements = announcements.filter(a => a.target === 'Todos' || a.target === 'Pais' || a.target === student.class).slice(0, 3);
 
-    const calculateAverage = (gradeRecord: GradeRecord): number | null => {
-        const notes = [gradeRecord.nota1, gradeRecord.nota2, gradeRecord.finalExam];
-        const validNotes = notes.map(n => parseFloat(String(n))).filter(n => !isNaN(n) && n >= 0 && n <= 20);
-        if (validNotes.length === 0) return null;
-        const sum = validNotes.reduce((acc, curr) => acc + curr, 0);
-        return sum / validNotes.length;
-    };
-
     const overallAverage = useMemo(() => {
         if (!studentGrades) return null;
         const subjectAverages = Object.values(studentGrades.gradesBySubject)
-            .map(calculateAverage)
+            .map(rec => calculateAverage(rec as GradeRecord))
             .filter((avg): avg is number => avg !== null);
         if (subjectAverages.length === 0) return null;
         const totalAverage = subjectAverages.reduce((a, b) => a + b, 0) / subjectAverages.length;
@@ -134,32 +128,41 @@ const StudentDashboard: React.FC = () => {
         const present = records.filter(r => r.status === 'Presente').length;
         const absent = records.filter(r => r.status === 'Ausente').length;
         const justified = records.filter(r => r.status === 'Justificado').length;
-        const rate = total > 0 ? ((present + justified) / total) * 100 : 100;
-        return { total, present, absent, justified, rate: rate.toFixed(1) };
+        const rate = total > 0 ? (present / total) * 100 : 100;
+        return { total, present, absent, justified, rate: rate.toFixed(0) };
     }, [attendance, studentId]);
 
     const handleSaveHealthRecord = (record: Omit<HealthRecord, 'id' | 'studentId' | 'recordedBy'>) => {
-        const newRecord: HealthRecord = { ...record, id: Date.now(), studentId, recordedBy: 'Sónia Pereira' };
+        const newRecord: HealthRecord = {
+            ...record,
+            id: Date.now(),
+            studentId,
+            recordedBy: 'Secretaria' // Mocked user
+        };
         setHealthRecords(prev => [newRecord, ...prev]);
+        // Here we would also call a context function to persist this data
+        // updateHealthRecords(studentId, [newRecord, ...healthRecords]);
     };
     
+    const categoryBadgeVariant = (cat: AnnouncementCategory) => {
+        switch(cat) {
+            case 'Urgente': return 'destructive' as const;
+            case 'Evento': return 'warning' as const;
+            case 'Informativo': return 'default' as const;
+        }
+    }
+
     return (
         <>
-            <PageHeader title="Portal do Aluno" subtitle="Visão consolidada do percurso académico." />
+            <PageHeader title="Portal do Aluno" subtitle={`Bem-vindo ao portal de ${student.name}`} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Main Content */}
                 <div className="lg:col-span-2 space-y-8">
-                    <InfoCard title="Desempenho Académico" icon={<BookOpenIcon className="h-6 w-6"/>}>
-                        {overallAverage && (
-                            <div className="text-center mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Média Geral Atual</p>
-                                <p className={`text-5xl font-bold ${parseFloat(overallAverage) >= 10 ? 'text-green-500' : 'text-red-500'}`}>
-                                    {overallAverage}
-                                </p>
-                            </div>
-                        )}
+                    {/* Grade Summary */}
+                    <InfoCard title="Desempenho Académico" icon={<BookOpenIcon className="h-6 w-6"/>} actions={<Badge variant="success">{`Média Geral: ${overallAverage ?? 'N/A'}`}</Badge>}>
                         <div className="overflow-x-auto">
-                             <table className="w-full text-sm">
+                            <table className="w-full text-sm">
                                 <thead className="text-left text-slate-600 dark:text-slate-400">
                                     <tr>
                                         <th className="p-2">Disciplina</th>
@@ -172,16 +175,16 @@ const StudentDashboard: React.FC = () => {
                                 <tbody>
                                     {subjectsForClass.map(subject => {
                                         const grades = studentGrades?.gradesBySubject[subject.id];
-                                        const average = grades ? calculateAverage(grades)?.toFixed(2) : '-';
-                                        const avgNum = parseFloat(average || '');
-                                        const averageColor = isNaN(avgNum) ? '' : avgNum >= 10 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+                                        const average = calculateAverage(grades);
+                                        const averageColor = !average ? '' : average >= 10 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400';
+
                                         return (
                                             <tr key={subject.id} className="border-t border-slate-200 dark:border-slate-700">
                                                 <td className="p-2 font-medium text-slate-800 dark:text-slate-200">{subject.name}</td>
                                                 <td className="p-2 text-center">{grades?.nota1 ?? '-'}</td>
                                                 <td className="p-2 text-center">{grades?.nota2 ?? '-'}</td>
                                                 <td className="p-2 text-center">{grades?.finalExam ?? '-'}</td>
-                                                <td className={`p-2 text-center font-bold text-lg ${averageColor}`}>{average}</td>
+                                                <td className={`p-2 text-center font-bold text-lg ${averageColor}`}>{average?.toFixed(2) ?? '-'}</td>
                                             </tr>
                                         )
                                     })}
@@ -190,63 +193,98 @@ const StudentDashboard: React.FC = () => {
                         </div>
                     </InfoCard>
 
-                    <InfoCard 
-                        title="Registo de Saúde" 
-                        icon={<HeartIcon className="h-6 w-6"/>}
-                        actions={<Button size="sm" onClick={() => setHealthModalOpen(true)}><PlusIcon className="h-4 w-4 mr-1"/> Adicionar</Button>}
-                      >
-                         {healthRecords.length > 0 ? (
-                             <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
-                                {healthRecords.map(rec => (
-                                    <div key={rec.id} className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-sm">
-                                        <p className="font-bold">{new Date(rec.date).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-                                        <p><span className="font-semibold">Ocorrência:</span> {rec.description}</p>
-                                        <p><span className="font-semibold">Ação Tomada:</span> {rec.actionTaken}</p>
-                                    </div>
+                    {/* Financial Summary */}
+                    <InfoCard title="Situação Financeira" icon={<CurrencyDollarIcon className="h-6 w-6"/>} actions={<Button onClick={() => navigate('/financeiro')}>Ver Detalhes</Button>}>
+                         {pendingTuition.length > 0 ? (
+                            <ul className="space-y-3">
+                                {pendingTuition.map(t => (
+                                    <li key={t.id} className="flex justify-between items-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                                        <div>
+                                            <p className="font-semibold">Mensalidade de {t.month}</p>
+                                            <p className="text-xs text-slate-500">Vencimento: {t.dueDate}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-red-600 dark:text-red-400">{formatCurrency(t.amount)}</p>
+                                            <Badge variant="destructive">{t.status}</Badge>
+                                        </div>
+                                    </li>
                                 ))}
-                            </div>
-                        ) : (
-                             <p className="text-center text-slate-500 dark:text-slate-400 py-4">Nenhum registo de saúde encontrado.</p>
-                        )}
-                     </InfoCard>
-                </div>
-
-                <div className="space-y-8">
-                    <ProfileCard name={student.name} imageUrl={student.photoUrl} details={{ Turma: student.class, Encarregado: student.guardian, Telefone: student.phone }}/>
+                            </ul>
+                         ) : (
+                            <p className="text-center text-green-600 dark:text-green-400 py-4 font-semibold">Sem pendências financeiras. Parabéns!</p>
+                         )}
+                    </InfoCard>
                     
-                    <InfoCard title="Assiduidade" icon={<ChartPieIcon className="h-6 w-6"/>}>
-                        <div className="text-center">
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Taxa de Presença</p>
-                            <p className="text-5xl font-bold text-green-500">{attendanceStats.rate}%</p>
-                        </div>
-                        <div className="flex justify-around text-center mt-4 pt-4 border-t dark:border-slate-700">
-                            <div><p className="text-xl font-bold">{attendanceStats.present}</p><p className="text-xs">Presenças</p></div>
-                            <div><p className="text-xl font-bold">{attendanceStats.absent}</p><p className="text-xs">Faltas</p></div>
-                            <div><p className="text-xl font-bold">{attendanceStats.justified}</p><p className="text-xs">Justificadas</p></div>
+                    {/* Announcements */}
+                    <InfoCard title="Mural de Avisos" icon={<BellIcon className="h-6 w-6"/>}>
+                         <div className="space-y-4">
+                            {studentAnnouncements.map(a => (
+                                <div key={a.id} className="border-b pb-3 dark:border-slate-700 last:border-b-0 last:pb-0">
+                                    <div className="flex justify-between items-start">
+                                        <h4 className="font-bold">{a.title}</h4>
+                                        <Badge variant={categoryBadgeVariant(a.category)}>{a.category}</Badge>
+                                    </div>
+                                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{a.content}</p>
+                                </div>
+                            ))}
                         </div>
                     </InfoCard>
 
-                    <InfoCard title="Mural de Avisos" icon={<BellIcon className="h-6 w-6"/>}>
-                         {studentAnnouncements.length > 0 ? (
-                             <ul className="space-y-3">
-                                {studentAnnouncements.map(ann => (
-                                    <li key={ann.id} className="text-sm">
-                                      <div className="flex justify-between items-center">
-                                        <p className="font-semibold">{ann.title}</p>
-                                        <Badge variant={ann.category === 'Urgente' ? 'destructive' : 'default'}>{ann.category}</Badge>
-                                      </div>
-                                      <p className="text-xs text-slate-500">{new Date(ann.date).toLocaleDateString('pt-MZ')}</p>
+                </div>
+
+                {/* Sidebar */}
+                <div className="space-y-8">
+                    <ProfileCard 
+                        name={student.name} 
+                        imageUrl={student.photoUrl} 
+                        details={{ Turma: student.class, Encarregado: student.guardian, Telefone: student.phone }}
+                    />
+                    
+                    <InfoCard title="Assiduidade" icon={<ChartPieIcon className="h-6 w-6"/>}>
+                        <div className="text-center">
+                             <div className="text-4xl font-bold text-reviva-green">{attendanceStats.rate}%</div>
+                             <p className="text-sm text-slate-500">de presença</p>
+                             <div className="text-xs mt-2 grid grid-cols-3 gap-1">
+                                <span><strong>{attendanceStats.present}</strong> Presente</span>
+                                <span><strong>{attendanceStats.absent}</strong> Faltas</span>
+                                <span><strong>{attendanceStats.justified}</strong> Just.</span>
+                             </div>
+                        </div>
+                    </InfoCard>
+
+                    <InfoCard title="Calendário Pessoal" icon={<CalendarDaysIcon className="h-6 w-6"/>}>
+                        <ul className="space-y-3">
+                            {upcomingEvents.map(event => (
+                                <li key={event.id}>
+                                    <p className="font-semibold">{event.title}</p>
+                                    <p className="text-sm text-slate-500">{new Date(event.date).toLocaleDateString('pt-MZ', { day: '2-digit', month: 'long'})} - <Badge variant={event.type === 'Prova' ? 'warning' : 'default'}>{event.type}</Badge></p>
+                                </li>
+                            ))}
+                        </ul>
+                    </InfoCard>
+
+                    <InfoCard title="Ficha de Saúde" icon={<HeartIcon className="h-6 w-6"/>} actions={<Button variant="secondary" size="sm" onClick={() => setHealthModalOpen(true)}><PlusIcon className="h-4 w-4 mr-1"/>Adicionar</Button>}>
+                        {healthRecords.length > 0 ? (
+                            <ul className="space-y-3">
+                                {healthRecords.slice(0, 3).map(record => (
+                                    <li key={record.id} className="text-sm">
+                                        <p className="font-semibold">{new Date(record.date).toLocaleDateString('pt-MZ')}: <span className="font-normal">{record.description}</span></p>
+                                        <p className="text-xs text-slate-500">Ação: {record.actionTaken}</p>
                                     </li>
                                 ))}
                             </ul>
                         ) : (
-                             <p className="text-center text-slate-500 dark:text-slate-400 py-4">Nenhum aviso recente.</p>
+                             <p className="text-center text-slate-500 dark:text-slate-400 text-sm py-2">Nenhum registo de saúde.</p>
                         )}
                     </InfoCard>
                 </div>
             </div>
-
-            <HealthRecordModal isOpen={isHealthModalOpen} onClose={() => setHealthModalOpen(false)} onSave={handleSaveHealthRecord}/>
+            
+            <HealthRecordModal 
+                isOpen={isHealthModalOpen}
+                onClose={() => setHealthModalOpen(false)}
+                onSave={handleSaveHealthRecord}
+            />
         </>
     );
 };

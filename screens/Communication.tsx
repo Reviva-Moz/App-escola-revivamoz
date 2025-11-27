@@ -1,21 +1,23 @@
 
 
 import React, { useState, useMemo } from 'react';
-import PageHeader from '../components/Header';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
+import PageHeader from '@/components/Header';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { PlusIcon, PaperClipIcon, EyeIcon } from '@heroicons/react/24/outline';
-import { Announcement, AnnouncementCategory, Document } from '../types';
-import { Badge } from '../components/ui/Badge';
-import { TagIcon } from '../components/icons';
-import { useData } from '../context/DataContext';
-import FileUpload from '../components/ui/FileUpload';
+import { Announcement, AnnouncementCategory, Document } from '@/types';
+import { Badge } from '@/components/ui/Badge';
+import { TagIcon } from '@/components/icons';
+import { useAdminData } from '@/context/AdminContext';
+import { useCoreData } from '@/context/CoreDataContext';
+import FileUpload from '@/components/ui/FileUpload';
 
 const Communication: React.FC = () => {
-    const { announcements, classes, updateAnnouncement } = useData(); 
+    const { announcements, updateAnnouncement } = useAdminData(); 
+    const { classes } = useCoreData(); 
     const [localAnnouncements, setLocalAnnouncements] = useState<Announcement[]>(announcements);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filter, setFilter] = useState<AnnouncementCategory | 'Todos'>('Todos');

@@ -2,18 +2,18 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import PageHeader from '../components/Header';
+import PageHeader from '@/components/Header';
 import { ArrowLeftIcon, UserGroupIcon } from '@heroicons/react/24/outline';
-import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { Select } from '../components/ui/Select';
-import { useData } from '../context/DataContext';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
+import { useCoreData } from '@/context/CoreDataContext';
 
 const ClassForm: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { classes, teachers, addClass, updateClass } = useData();
+    const { classes, teachers, addClass, updateClass } = useCoreData();
     const isEditing = Boolean(id);
 
     const [className, setClassName] = useState('');

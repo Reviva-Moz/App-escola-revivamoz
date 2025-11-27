@@ -9,7 +9,7 @@ import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import WebcamCapture from '../components/WebcamCapture';
-import { useData } from '../context/DataContext';
+import { useCoreData } from '../context/CoreDataContext';
 import { Student, Document } from '../types';
 import FileUpload from '../components/ui/FileUpload';
 
@@ -18,7 +18,7 @@ const StudentForm: React.FC = () => {
     const navigate = useNavigate();
     const isEditing = Boolean(id);
     
-    const { students, classes, addStudent, updateStudent } = useData();
+    const { students, classes, addStudent, updateStudent } = useCoreData();
 
     const [formState, setFormState] = useState<Omit<Student, 'id' | 'class'>>({
         name: '',

@@ -6,7 +6,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Tuition, MessageTemplate } from '../types';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency } from '@/utils/formatters';
 
 interface SchedulingModalProps {
     isOpen: boolean;

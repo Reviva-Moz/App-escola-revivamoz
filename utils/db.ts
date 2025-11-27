@@ -1,4 +1,4 @@
-import { DataContextType } from '../types';
+
 
 const DB_NAME = 'SGERevivaDB';
 const DB_VERSION = 1;

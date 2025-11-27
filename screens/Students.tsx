@@ -1,20 +1,18 @@
-
-
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageHeader from '../components/Header';
-import DataTable from '../components/DataTable';
-import { Student } from '../types';
+import PageHeader from '@/components/Header';
+import DataTable from '@/components/DataTable';
+import { Student } from '@/types';
 import { PlusIcon, PencilIcon, IdentificationIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Badge } from '../components/ui/Badge';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { useData } from '../context/DataContext';
+import { Badge } from '@/components/ui/Badge';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { useCoreData } from '@/context/CoreDataContext';
 
 const Students: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const { students, classes, deleteStudent } = useData();
+  const { students, classes, deleteStudent } = useCoreData();
 
   const studentsWithClassNames = useMemo(() => {
     return students.map(student => {

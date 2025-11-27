@@ -2,21 +2,21 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import PageHeader from '../components/Header';
+import PageHeader from '@/components/Header';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { Select } from '../components/ui/Select';
-import { useData } from '../context/DataContext';
-import { Staff, Document } from '../types';
-import WebcamCapture from '../components/WebcamCapture';
-import FileUpload from '../components/ui/FileUpload';
+import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
+import { useCoreData } from '@/context/CoreDataContext';
+import { Staff, Document } from '@/types';
+import WebcamCapture from '@/components/WebcamCapture';
+import FileUpload from '@/components/ui/FileUpload';
 
 const CollaboratorForm: React.FC = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { staff, addStaff, updateStaff } = useData();
+    const { staff, addStaff, updateStaff } = useCoreData();
     const isEditing = Boolean(id);
 
     const [formState, setFormState] = useState<Omit<Staff, 'id'>>({
@@ -30,6 +30,7 @@ const CollaboratorForm: React.FC = () => {
         photoUrl: '',
         documents: [],
     });
+    const [error, setError] = useState<string>('');
 
     useEffect(() => {
         if(isEditing && id) {
@@ -65,6 +66,19 @@ const CollaboratorForm: React.FC = () => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
+
+        const emailExists = staff.some(
+            staffMember =>
+                staffMember.email.toLowerCase() === formState.email.toLowerCase() &&
+                (!id || staffMember.id !== parseInt(id))
+        );
+
+        if (emailExists) {
+            setError('Este email já está a ser utilizado por outro colaborador.');
+            return;
+        }
+
         if (isEditing && id) {
             updateStaff({ id: parseInt(id), ...formState });
         } else {
@@ -129,6 +143,8 @@ const CollaboratorForm: React.FC = () => {
                         </Card>
                     </div>
                 </div>
+                
+                {error && <p className="text-center text-red-500 mt-4">{error}</p>}
                 
                 <div className="flex justify-end mt-8 gap-4">
                     <Button type="button" variant="secondary" onClick={() => navigate('/colaboradores')}>

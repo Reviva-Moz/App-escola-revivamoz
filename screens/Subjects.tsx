@@ -1,17 +1,17 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageHeader from '../components/Header';
-import DataTable from '../components/DataTable';
-import { Subject } from '../types';
+import PageHeader from '@/components/Header';
+import DataTable from '@/components/DataTable';
+import { Subject } from '@/types';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { useData } from '../context/DataContext';
+import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { useCoreData } from '@/context/CoreDataContext';
 
 const Subjects: React.FC = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const { subjects, classCurriculum, deleteSubject } = useData();
+  const { subjects, classCurriculum, deleteSubject } = useCoreData();
 
   const filteredSubjects = useMemo(() => 
     subjects.filter(subject =>

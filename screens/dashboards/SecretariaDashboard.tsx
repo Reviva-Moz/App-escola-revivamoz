@@ -3,7 +3,9 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/Header';
-import { useData } from '../../context/DataContext';
+import { useAdminData } from '@/context/AdminContext';
+import { useCoreData } from '@/context/CoreDataContext';
+import { useAcademicData } from '@/context/AcademicContext';
 import { Card } from '../../components/ui/Card';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
@@ -75,7 +77,9 @@ const SearchResultsModal: React.FC<{
 
 const SecretariaDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const { announcements, students, teachers, staff, activities, calendarEvents } = useData();
+    const { announcements } = useAdminData();
+    const { students, teachers, staff, activities } = useCoreData();
+    const { calendarEvents } = useAcademicData();
     const [searchTerm, setSearchTerm] = useState('');
     const [isSearchModalOpen, setSearchModalOpen] = useState(false);
 

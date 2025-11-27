@@ -12,6 +12,7 @@ export interface UserAccount {
   email: string;
   role: UserRole;
   lastLogin: string;
+  password?: string;
 }
 
 export interface Document {
@@ -289,35 +290,23 @@ export interface MessageTemplate {
     content: string;
 }
 
-export interface DataContextType {
+interface CrudFunctions<T, C, U> {
+  add: (item: C) => void;
+  update: (item: U) => void;
+  delete: (id: number) => void;
+}
+
+export interface CoreDataContextType {
   isLoading: boolean;
   students: Student[];
   teachers: Teacher[];
   staff: Staff[];
   subjects: Subject[];
   classes: Class[];
-  transactions: Transaction[];
-  categories: Category[];
-  scholarships: Scholarship[];
-  announcements: Announcement[];
-  books: Book[];
-  bookLoans: BookLoan[];
-  lessonPlans: LessonPlan[];
-  systemSettings: SystemSettings;
-  users: UserAccount[];
-  healthRecords: HealthRecord[];
-  grades: StudentGrades[];
-  calendarEvents: CalendarEvent[];
   classCurriculum: ClassCurriculum[];
   studentScholarships: StudentScholarship[];
-  tuition: Tuition[];
-  attendance: AttendanceRecord[];
   activities: Activity[];
-  aiConfiguration: AIConfiguration;
-  messageTemplates: MessageTemplate[];
-  paymentMethods: PaymentMethod[];
-  
-  // CRUD functions
+
   addStudent: (student: Omit<Student, 'id' | 'class'>) => void;
   updateStudent: (student: Omit<Student, 'id' | 'class'> & { id: number }) => void;
   deleteStudent: (id: number) => void;
@@ -333,41 +322,70 @@ export interface DataContextType {
   addSubject: (subject: Omit<Subject, 'id'>) => void;
   updateSubject: (subject: Subject) => void;
   deleteSubject: (id: number) => void;
-  updateSettings: (settings: SystemSettings) => void;
-  addUser: (user: Omit<UserAccount, 'id'|'lastLogin'>) => void;
-  updateUser: (user: UserAccount) => void;
-  deleteUser: (id: number) => void;
-  updateAIConfiguration: (config: AIConfiguration) => void;
-  
-  // New full CRUD functions
   updateClassCurriculum: (classId: number, curriculum: ClassCurriculum[]) => void;
-  
+  updateTeacherAssignments: (teacherId: number, assignments: { classId: number, subjectId: number }[]) => void;
+}
+
+export interface FinancialContextType {
+  transactions: Transaction[];
+  categories: Category[];
+  scholarships: Scholarship[];
+  paymentMethods: PaymentMethod[];
+  tuition: Tuition[];
+
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   updateTransaction: (transaction: Transaction) => void;
   deleteTransaction: (id: number) => void;
-  
   addCategory: (category: Omit<Category, 'id'>) => void;
   updateCategory: (category: Category) => void;
   deleteCategory: (id: number) => void;
-  
   addScholarship: (scholarship: Omit<Scholarship, 'id'>) => void;
   updateScholarship: (scholarship: Scholarship) => void;
   deleteScholarship: (id: number) => void;
-  
   addPaymentMethod: (method: Omit<PaymentMethod, 'id'>) => void;
   updatePaymentMethod: (method: PaymentMethod) => void;
   deletePaymentMethod: (id: number) => void;
+}
 
-  addMessageTemplate: (template: Omit<MessageTemplate, 'id'>) => void;
-  updateMessageTemplate: (template: MessageTemplate) => void;
-  deleteMessageTemplate: (id: number) => void;
+export interface AcademicContextType {
+    isLoading: boolean;
+    grades: StudentGrades[];
+    attendance: AttendanceRecord[];
+    lessonPlans: LessonPlan[];
+    calendarEvents: CalendarEvent[];
 
-  addBook: (book: Omit<Book, 'id' | 'availableStock'>) => void;
-  updateBook: (book: Book) => void;
-  deleteBook: (id: number) => void;
+    updateGrade: (studentId: number, subjectId: number, field: keyof GradeRecord, value: string | number) => void;
+    saveAttendance: (records: Omit<AttendanceRecord, 'id'>[]) => void;
+    addLessonPlan: (plan: Omit<LessonPlan, 'id'>) => void;
+    updateLessonPlan: (plan: LessonPlan) => void;
+    deleteLessonPlan: (id: number) => void;
+    addEvent: (event: Omit<CalendarEvent, 'id' | 'createdAt'>) => void;
+    updateEvent: (event: CalendarEvent) => void;
+    deleteEvent: (id: number) => void;
+}
 
-  addLoan: (loan: Omit<BookLoan, 'id' | 'status'>) => void;
-  returnLoan: (loanId: number) => void;
-  
-  updateAnnouncement: (announcement: Announcement) => void;
+export interface AdminContextType {
+    announcements: Announcement[];
+    books: Book[];
+    bookLoans: BookLoan[];
+    systemSettings: SystemSettings;
+    users: UserAccount[];
+    healthRecords: HealthRecord[];
+    aiConfiguration: AIConfiguration;
+    messageTemplates: MessageTemplate[];
+
+    updateSettings: (settings: SystemSettings) => void;
+    addUser: (user: Omit<UserAccount, 'id'|'lastLogin'>) => void;
+    updateUser: (user: UserAccount) => void;
+    deleteUser: (id: number) => void;
+    updateAIConfiguration: (config: AIConfiguration) => void;
+    addMessageTemplate: (template: Omit<MessageTemplate, 'id'>) => void;
+    updateMessageTemplate: (template: MessageTemplate) => void;
+    deleteMessageTemplate: (id: number) => void;
+    addBook: (book: Omit<Book, 'id' | 'availableStock'>) => void;
+    updateBook: (book: Book) => void;
+    deleteBook: (id: number) => void;
+    addLoan: (loan: Omit<BookLoan, 'id' | 'status'>) => void;
+    returnLoan: (loanId: number) => void;
+    updateAnnouncement: (announcement: Announcement) => void;
 }

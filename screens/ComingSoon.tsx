@@ -1,6 +1,7 @@
 
+
 import React from 'react';
-import PageHeader from '../components/Header';
+import PageHeader from '@/components/Header';
 import { WrenchScrewdriverIcon } from '@heroicons/react/24/outline';
 
 interface ComingSoonProps {

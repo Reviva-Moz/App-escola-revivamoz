@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Tuition, MessageTemplate } from '../types';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency } from '@/utils/formatters';
 import { Select } from './ui/Select';
 
 interface SendReminderModalProps {

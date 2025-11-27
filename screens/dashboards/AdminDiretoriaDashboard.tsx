@@ -9,14 +9,18 @@ import { TOTAL_STUDENTS, TOTAL_TEACHERS, APPROVAL_RATE, FINANCIAL_SUMMARY, CLASS
 import { formatCurrency } from '../../utils/formatters';
 import { Card } from '../../components/ui/Card';
 import { useTheme } from '../../context/ThemeContext';
-import { useData } from '../../context/DataContext';
+import { useCoreData } from '../../context/CoreDataContext';
+import { useFinancialData } from '../../context/FinancialContext';
+import { useAcademicData } from '../../context/AcademicContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 
 const AdminDiretoriaDashboard: React.FC = () => {
   const { theme } = useTheme();
-  const { tuition, activities, calendarEvents } = useData();
+  const { activities } = useCoreData();
+  const { tuition } = useFinancialData();
+  const { calendarEvents } = useAcademicData();
   const tickColor = theme === 'dark' ? '#94a3b8' : '#475569';
 
   const overdueTuition = tuition.filter(t => t.status === 'Atrasado');

@@ -1,16 +1,19 @@
+
 import React, { useState, useMemo, FC, useEffect } from 'react';
-import PageHeader from '../components/Header';
+import PageHeader from '@/components/Header';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
-import { SparklesIcon } from '../components/icons';
-import { LessonPlan, Subject, AIConfiguration } from '../types';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { SparklesIcon } from '@/components/icons';
+import { LessonPlan, Subject, AIConfiguration } from '@/types';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-import { useData } from '../context/DataContext';
-import { useAuth } from '../context/AuthContext';
+import { useAdminData } from '@/context/AdminContext';
+import { useCoreData } from '@/context/CoreDataContext';
+import { useAcademicData } from '@/context/AcademicContext';
+import { useAuth } from '@/context/AuthContext';
 
 const AIAssistantModal: FC<{
   isOpen: boolean;
@@ -18,7 +21,7 @@ const AIAssistantModal: FC<{
   onApply: (data: { objectives: string; content: string; resources: string; }) => void;
   subjectName: string;
 }> = ({ isOpen, onClose, onApply, subjectName }) => {
-    const { aiConfiguration } = useData();
+    const { aiConfiguration } = useAdminData();
     const [formValues, setFormValues] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<{ objectives: string; content: string; resources: string; } | null>(null);
@@ -81,8 +84,7 @@ const AIAssistantModal: FC<{
                 }
             });
 
-            const resultText = String(response.text).trim();
-            const data = JSON.parse(resultText);
+            const data = JSON.parse(response.text.trim());
             setResult(data);
 
         } catch (error) {
@@ -94,7 +96,7 @@ const AIAssistantModal: FC<{
         }
     };
 
-    const isGenerateDisabled = isLoading || Object.values(formValues).every(value => value.trim() === '');
+    const isGenerateDisabled = isLoading || Object.values(formValues).every(value => String(value).trim() === '');
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Assistente de IA para Planos de Aula (AEP)">
@@ -156,8 +158,8 @@ const AIAssistantModal: FC<{
 
 const LessonPlan: React.FC = () => {
   const { user } = useAuth();
-  const { classes, subjects, classCurriculum, lessonPlans, teachers } = useData(); // TODO: Add CRUD functions
-  const [plans, setPlans] = useState<LessonPlan[]>(lessonPlans);
+  const { classes, subjects, classCurriculum, teachers } = useCoreData();
+  const { lessonPlans, addLessonPlan, updateLessonPlan, deleteLessonPlan } = useAcademicData();
   
   // Modal states
   const [isPlanModalOpen, setPlanModalOpen] = useState(false);
@@ -218,10 +220,10 @@ const LessonPlan: React.FC = () => {
 
   const filteredPlans = useMemo(() => {
     if (!selectedClassId || !selectedSubjectId) return [];
-    return plans
+    return lessonPlans
         .filter(p => p.classId === parseInt(selectedClassId) && p.subjectId === parseInt(selectedSubjectId))
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [plans, selectedClassId, selectedSubjectId]);
+  }, [lessonPlans, selectedClassId, selectedSubjectId]);
 
   const handleOpenPlanModal = (plan: LessonPlan | null) => {
     setEditingPlan(plan);
@@ -230,10 +232,9 @@ const LessonPlan: React.FC = () => {
   
   const handleSavePlan = (planData: Omit<LessonPlan, 'id'> & { id?: number }) => {
     if (planData.id) {
-        setPlans(plans.map(p => p.id === planData.id ? { ...p, ...planData } : p));
+        updateLessonPlan({ ...planData, id: planData.id });
     } else {
-        const newPlan = { ...planData, id: Date.now() };
-        setPlans([...plans, newPlan]);
+        addLessonPlan(planData);
     }
     setPlanModalOpen(false);
     setEditingPlan(null);
@@ -241,7 +242,7 @@ const LessonPlan: React.FC = () => {
 
   const handleDeletePlan = (id: number) => {
     if (window.confirm("Tem certeza que deseja remover este plano de aula?")) {
-      setPlans(plans.filter(p => p.id !== id));
+      deleteLessonPlan(id);
     }
   };
 

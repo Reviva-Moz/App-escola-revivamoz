@@ -1,26 +1,27 @@
-
-
 import React, { useState, useMemo, useEffect } from 'react';
-import PageHeader from '../components/Header';
-import StatCard from '../components/StatCard';
-import DataTable from '../components/DataTable';
-import CategoryPieChart from '../components/charts/CategoryPieChart';
-import KanbanBoard from '../components/KanbanBoard';
-import { formatCurrency } from '../utils/formatters';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import PageHeader from '@/components/Header';
+import StatCard from '@/components/StatCard';
+import DataTable from '@/components/DataTable';
+import CategoryPieChart from '@/components/charts/CategoryPieChart';
+import KanbanBoard from '@/components/KanbanBoard';
+import { formatCurrency } from '@/utils/formatters';
 import { 
-    FINANCIAL_SUMMARY, REVENUE_CATEGORIES, EXPENSE_CATEGORIES, ENROLLMENTS_DATA, PAYMENT_METHODS_DATA
-} from '../constants';
+    FINANCIAL_SUMMARY, REVENUE_CATEGORIES, EXPENSE_CATEGORIES, ENROLLMENTS_DATA
+} from '@/constants';
 import { ArrowTrendingUpIcon, ArrowTrendingDownIcon, ScaleIcon, CurrencyDollarIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Enrollment, Tuition, Category, Scholarship, Transaction, PaymentMethod, MessageTemplate } from '../types';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
-import { Card } from '../components/ui/Card';
-import { useData } from '../context/DataContext';
-import SendReminderModal from '../components/SendReminderModal';
-import SchedulingModal from '../components/SchedulingModal';
+import { Enrollment, Tuition, Category, Scholarship, Transaction, PaymentMethod, MessageTemplate } from '@/types';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { Card } from '@/components/ui/Card';
+import { useFinancialData } from '@/context/FinancialContext';
+import { useCoreData } from '@/context/CoreDataContext';
+import { useAdminData } from '@/context/AdminContext';
+import SendReminderModal from '@/components/SendReminderModal';
+import SchedulingModal from '@/components/SchedulingModal';
 
 type Tab = 'dashboard' | 'transactions' | 'cashier' | 'enrollments' | 'tuition' | 'kanban' | 'scholarships' | 'categories' | 'paymentMethods' | 'messageTemplates';
 
@@ -120,9 +121,9 @@ const DailyCashier: React.FC<{ transactions: Transaction[], categories: Category
 };
 
 const PaymentMethodsManagement: React.FC = () => {
-    const [methods, setMethods] = useState<PaymentMethod[]>(PAYMENT_METHODS_DATA);
+    const { paymentMethods } = useFinancialData();
     
-    const rows = methods.map(method => [
+    const rows = paymentMethods.map(method => [
         <span className="font-medium text-slate-800 dark:text-slate-200">{method.name}</span>,
         method.type,
         method.instructions,
@@ -163,7 +164,7 @@ const TransactionLedger: React.FC<{
     onDelete: (id: number) => void;
     onAdd: () => void;
 }> = ({ onEdit, onDelete, onAdd }) => {
-    const { transactions, categories } = useData();
+    const { transactions, categories } = useFinancialData();
     const transactionRows = transactions.map(t => {
         const category = categories.find(c => c.id === t.categoryId);
         return [
@@ -202,7 +203,7 @@ const CategoryManagement: React.FC<{
     onDelete: (id: number) => void;
     onAdd: (type: Category['type']) => void;
 }> = ({ onEdit, onDelete, onAdd }) => {
-    const { categories } = useData();
+    const { categories } = useFinancialData();
     const renderRows = (type: Category['type']) => {
         return categories
             .filter(c => c.type === type)
@@ -240,7 +241,8 @@ const ScholarshipManagement: React.FC<{
     onDelete: (id: number) => void;
     onAdd: () => void;
 }> = ({ onEdit, onDelete, onAdd }) => {
-    const { scholarships, studentScholarships } = useData();
+    const { scholarships } = useFinancialData();
+    const { studentScholarships } = useCoreData();
     const studentCount = (scholarshipId: number) => {
         return studentScholarships.filter(ss => ss.scholarshipId === scholarshipId).length;
     };
@@ -270,11 +272,40 @@ const ScholarshipManagement: React.FC<{
 
 
 const Financial: React.FC = () => {
-    const {
-        transactions, categories, scholarships, students, tuition, studentScholarships, messageTemplates: initialTemplates
-    } = useData();
+    const { transactions, categories, scholarships, tuition } = useFinancialData();
+    const { students, studentScholarships } = useCoreData();
+    const { messageTemplates: initialTemplates } = useAdminData();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
 
-    const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+    const tabs: { id: Tab, label: string }[] = [
+        { id: 'dashboard', label: 'Dashboard' },
+        { id: 'transactions', label: 'Transações' },
+        { id: 'cashier', label: 'Caixa Diário' },
+        { id: 'enrollments', label: 'Matrículas' },
+        { id: 'tuition', label: 'Mensalidades' },
+        { id: 'kanban', label: 'Cobrança (Kanban)' },
+        { id: 'scholarships', label: 'Bolsas de Estudo' },
+        { id: 'categories', label: 'Categorias' },
+        { id: 'paymentMethods', label: 'Métodos de Pagamento' },
+        { id: 'messageTemplates', label: 'Modelos de Mensagem' },
+    ];
+    
+    const tabFromUrl = searchParams.get('tab') as Tab;
+    const [activeTab, setActiveTab] = useState<Tab>(tabFromUrl && tabs.some(t => t.id === tabFromUrl) ? tabFromUrl : 'dashboard');
+    
+    useEffect(() => {
+        const tabFromUrl = searchParams.get('tab') as Tab;
+        if (tabFromUrl && tabs.some(t => t.id === tabFromUrl)) {
+          setActiveTab(tabFromUrl);
+        }
+    }, [searchParams]);
+
+    const handleTabChange = (tabId: Tab) => {
+        setActiveTab(tabId);
+        navigate(`/financeiro?tab=${tabId}`, { replace: true });
+    };
+
     const [messageTemplates, setMessageTemplates] = useState<MessageTemplate[]>(initialTemplates);
 
     // State for transactions
@@ -307,9 +338,7 @@ const Financial: React.FC = () => {
 
         let hasChanges = false;
         const updatedTuitions = kanbanTuitions.map(t => {
-            // Check only 'Pendente' items to avoid re-evaluating already 'Atrasado' ones.
             if (t.status === 'Pendente') {
-                // Safely create date object to avoid timezone issues.
                 const dueDate = new Date(t.dueDate + 'T00:00:00');
                 if (dueDate < today) {
                     hasChanges = true;
@@ -322,21 +351,7 @@ const Financial: React.FC = () => {
         if (hasChanges) {
             setKanbanTuitions(updatedTuitions);
         }
-    }, []); // Run only once on component mount.
-
-
-    const tabs: { id: Tab, label: string }[] = [
-        { id: 'dashboard', label: 'Dashboard' },
-        { id: 'transactions', label: 'Transações' },
-        { id: 'cashier', label: 'Caixa Diário' },
-        { id: 'enrollments', label: 'Matrículas' },
-        { id: 'tuition', label: 'Mensalidades' },
-        { id: 'kanban', label: 'Cobrança (Kanban)' },
-        { id: 'scholarships', label: 'Bolsas de Estudo' },
-        { id: 'categories', label: 'Categorias' },
-        { id: 'paymentMethods', label: 'Métodos de Pagamento' },
-        { id: 'messageTemplates', label: 'Modelos de Mensagem' },
-    ];
+    }, []); 
 
     // --- Transaction Modal Logic ---
     const handleAddTransaction = () => { setEditingTransaction(null); setTransactionModalOpen(true); };
@@ -382,9 +397,9 @@ const Financial: React.FC = () => {
         
         if (newStatus === 'Em Cobrança') {
             setSelectedTuition(tuitionToMove);
-            setCommunicationChannel('whatsapp'); // Default
+            setCommunicationChannel('whatsapp');
             setCommunicationModalOpen(true);
-            return; // Don't update state here, let the modal handler do it
+            return;
         }
 
         if (newStatus === 'Pago') {
@@ -421,7 +436,7 @@ const Financial: React.FC = () => {
             case 'dashboard': return <FinancialDashboard />;
             case 'transactions': return <TransactionLedger onAdd={handleAddTransaction} onEdit={handleEditTransaction} onDelete={handleDeleteTransaction} />;
             case 'cashier': return <DailyCashier transactions={transactions} categories={categories} />;
-            case 'enrollments': return <DataTable title="Gestão de Matrículas" headers={['Aluno', 'Data', 'Valor', 'Desconto', 'Status', 'Ações']} rows={ENROLLMENTS_DATA.map((e: Enrollment) => [e.studentName, e.date, formatCurrency(e.amount), formatCurrency(e.discount), getStatusBadge(e.status), <Button variant="link">Gerar Recibo</Button>])} />;
+            case 'enrollments': return <DataTable title="Gestão de Matrículas" headers={['Aluno', 'Data', 'Valor', 'Desconto', 'Status', 'Ações']} rows={ENROLLMENTS_DATA.map((e: Enrollment) => [e.studentName, e.date, formatCurrency(e.amount), formatCurrency(e.discount), getStatusBadge(e.status as Tuition['status']), <Button variant="link">Gerar Recibo</Button>])} />;
             case 'tuition':
                 const tuitionRows = tuition.map((t: Tuition) => {
                     const studentScholarship = studentScholarships.find(ss => ss.studentId === t.studentId);
@@ -431,87 +446,114 @@ const Financial: React.FC = () => {
                     const currentStudent = students.find(s => s.id === t.studentId);
                     let siblingDiscount = 0, isSiblingDiscounted = false;
                     if (currentStudent) {
-                        const siblings = students.filter(s => s.guardian === currentStudent.guardian && s.phone === currentStudent.phone).sort((a, b) => a.id - b.id);
-                        if (siblings.length > 1 && siblings[0].id !== currentStudent.id) {
-                            siblingDiscount = t.amount * (SIBLING_DISCOUNT_PERCENTAGE / 100);
+                        const siblings = students.filter(s => s.guardian === currentStudent.guardian && s.id !== currentStudent.id);
+                        if (siblings.length > 0) {
                             isSiblingDiscounted = true;
+                            siblingDiscount = t.amount * (SIBLING_DISCOUNT_PERCENTAGE / 100);
                         }
                     }
-                    const totalDiscount = scholarshipDiscount + siblingDiscount;
-                    return [ t.studentName, t.month, t.dueDate, formatCurrency(t.amount),
-                        <span className="flex items-center">{formatCurrency(totalDiscount)}{isSiblingDiscounted && <Badge variant="warning" className="ml-2">Irmão</Badge>}</span>,
-                        <span className="font-bold text-reviva-green">{formatCurrency(t.amount - totalDiscount)}</span>,
-                        getStatusBadge(t.status), 
-                        <Button variant="link" className="text-amber-600 hover:text-amber-800">Enviar Alerta</Button>
+
+                    const finalAmount = t.amount - scholarshipDiscount - siblingDiscount;
+
+                    return [
+                        t.studentName,
+                        t.month,
+                        t.dueDate,
+                        formatCurrency(t.amount),
+                        scholarship ? `${scholarship.name} (${scholarship.type === 'Percentagem' ? `${scholarship.value}%` : formatCurrency(scholarship.value)})` : 'N/A',
+                        isSiblingDiscounted ? `${SIBLING_DISCOUNT_PERCENTAGE}%` : 'N/A',
+                        formatCurrency(finalAmount),
+                        getStatusBadge(t.status),
+                        <Button variant="link">Ver Recibo</Button>
                     ];
                 });
-                 return <DataTable title="Gestão de Mensalidades" headers={['Aluno', 'Mês', 'Vencimento', 'Valor Bruto', 'Desconto', 'Valor Final', 'Status', 'Ações']} rows={tuitionRows} />;
-            case 'kanban': return <KanbanBoard columns={kanbanColumns} onStatusChange={handleKanbanStatusChange} onSchedule={handleOpenScheduling} onSendSms={handleOpenSms} onSendWhatsApp={handleOpenWhatsApp} />;
-            case 'categories': return <CategoryManagement onAdd={handleAddCategory} onEdit={handleEditCategory} onDelete={handleDeleteCategory} />;
-            case 'scholarships': return <ScholarshipManagement onAdd={handleAddScholarship} onEdit={handleEditScholarship} onDelete={handleDeleteScholarship} />;
-            case 'paymentMethods': return <PaymentMethodsManagement />;
+                return <DataTable title="Gestão de Mensalidades" headers={['Aluno', 'Mês', 'Vencimento', 'Valor Base', 'Bolsa Aplicada', 'Desc. Irmão', 'Valor Final', 'Status', 'Ações']} rows={tuitionRows} />;
+            case 'kanban': 
+                return <KanbanBoard columns={kanbanColumns} onStatusChange={handleKanbanStatusChange} onSchedule={handleOpenScheduling} onSendSms={handleOpenSms} onSendWhatsApp={handleOpenWhatsApp} />;
+            case 'scholarships': 
+                return <ScholarshipManagement onAdd={handleAddScholarship} onEdit={handleEditScholarship} onDelete={handleDeleteScholarship} />;
+            case 'categories': 
+                return <CategoryManagement onAdd={handleAddCategory} onEdit={handleEditCategory} onDelete={handleDeleteCategory} />;
+            case 'paymentMethods': 
+                return <PaymentMethodsManagement />;
             case 'messageTemplates':
                 const templateRows = messageTemplates.map(t => [
-                    <span className="font-medium text-slate-800 dark:text-slate-200">{t.name}</span>,
+                    t.name,
                     t.shortcut,
-                    <p className="whitespace-pre-wrap max-w-md">{t.content}</p>,
-                    <div className="flex"><Button variant="link" size="sm" onClick={()=>handleEditTemplate(t)}><PencilIcon className="h-4 w-4 mr-1"/>Editar</Button><Button variant="link" size="sm" className="text-red-500" onClick={()=>handleDeleteTemplate(t.id)}><TrashIcon className="h-4 w-4 mr-1"/>Remover</Button></div>
+                    t.content,
+                    <div className="flex">
+                        <Button variant="link" size="sm" onClick={() => handleEditTemplate(t)}><PencilIcon className="h-4 w-4 mr-1"/>Editar</Button>
+                        <Button variant="link" size="sm" className="text-red-500" onClick={() => handleDeleteTemplate(t.id)}><TrashIcon className="h-4 w-4 mr-1"/>Remover</Button>
+                    </div>
                 ]);
-                return <Card><div className="p-4 flex justify-between items-center"><h3 className="text-lg font-semibold">Modelos de Mensagem</h3><Button onClick={handleAddTemplate}><PlusIcon className="h-5 w-5 mr-2"/>Novo Modelo</Button></div><DataTable title="" headers={['Nome', 'Atalho', 'Conteúdo', 'Ações']} rows={templateRows}/></Card>;
-            default: return null;
+                return (
+                    <Card>
+                        <div className="p-4 flex justify-between items-center">
+                            <h3 className="text-lg font-semibold">Modelos de Mensagem para Cobranças</h3>
+                            <Button onClick={handleAddTemplate}><PlusIcon className="h-5 w-5 mr-2"/>Novo Modelo</Button>
+                        </div>
+                        <DataTable 
+                            headers={['Nome do Modelo', 'Atalho', 'Conteúdo', 'Ações']}
+                            rows={templateRows} 
+                            title=""
+                        />
+                    </Card>
+                );
+            default: 
+                return <FinancialDashboard />;
         }
     };
-    
+
     return (
         <>
-            <PageHeader title="Sistema Financeiro Completo" subtitle="Controle total sobre as finanças da escola" />
+            <PageHeader title="Gestão Financeira" subtitle="Controle as finanças da sua escola de forma centralizada" />
+
             <div className="mb-6 border-b border-slate-200 dark:border-slate-700">
-                <nav className="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">{tabs.map(tab => (<button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`${ activeTab === tab.id ? 'border-reviva-green text-reviva-green' : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:border-slate-600' } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none`}>{tab.label}</button>))}</nav>
+                <nav className="-mb-px flex space-x-4 overflow-x-auto">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => handleTabChange(tab.id)}
+                            className={`${activeTab === tab.id
+                                ? 'border-reviva-green text-reviva-green'
+                                : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                } whitespace-nowrap py-4 px-3 border-b-2 font-medium text-sm`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </nav>
             </div>
             
-            <div>{renderContent()}</div>
+            {renderContent()}
+
+            {isTransactionModalOpen && <div/>}
+            {isCategoryModalOpen && <div/>}
+            {isScholarshipModalOpen && <div/>}
+            {isTemplateModalOpen && <div/>}
             
-            <Modal isOpen={isTransactionModalOpen} onClose={() => setTransactionModalOpen(false)} title={editingTransaction ? 'Editar Transação' : 'Nova Transação'}><TransactionForm transaction={editingTransaction} categories={categories} onSave={handleSaveTransaction} onCancel={() => setTransactionModalOpen(false)}/></Modal>
-            <Modal isOpen={isCategoryModalOpen} onClose={() => setCategoryModalOpen(false)} title={editingCategory && 'id' in editingCategory ? 'Editar Categoria' : `Adicionar Categoria de ${editingCategory?.type}`}><CategoryForm category={editingCategory && 'id' in editingCategory ? editingCategory : null} onSave={handleSaveCategory} onCancel={() => setCategoryModalOpen(false)}/></Modal>
-            <Modal isOpen={isScholarshipModalOpen} onClose={() => setScholarshipModalOpen(false)} title={editingScholarship ? 'Editar Bolsa de Estudo' : 'Criar Nova Bolsa de Estudo'}><ScholarshipForm scholarship={editingScholarship} onSave={handleSaveScholarship} onCancel={() => setScholarshipModalOpen(false)}/></Modal>
-            <SendReminderModal isOpen={isCommunicationModalOpen} onClose={() => setCommunicationModalOpen(false)} onSend={handleSendReminder} tuition={selectedTuition} channel={communicationChannel} templates={messageTemplates} />
-            <SchedulingModal isOpen={isSchedulingModalOpen} onClose={() => setSchedulingModalOpen(false)} onSchedule={handleScheduleReminder} tuition={selectedTuition} templates={messageTemplates} />
-            <Modal isOpen={isTemplateModalOpen} onClose={() => setTemplateModalOpen(false)} title={editingTemplate ? 'Editar Modelo' : 'Novo Modelo de Mensagem'}><MessageTemplateForm onSave={handleSaveTemplate} onCancel={()=>setTemplateModalOpen(false)} template={editingTemplate}/></Modal>
+            {selectedTuition && isCommunicationModalOpen && (
+                <SendReminderModal 
+                    isOpen={isCommunicationModalOpen}
+                    onClose={() => setCommunicationModalOpen(false)}
+                    onSend={handleSendReminder}
+                    tuition={selectedTuition}
+                    channel={communicationChannel}
+                    templates={messageTemplates}
+                />
+            )}
+            
+            {selectedTuition && isSchedulingModalOpen && (
+                <SchedulingModal
+                    isOpen={isSchedulingModalOpen}
+                    onClose={() => setSchedulingModalOpen(false)}
+                    onSchedule={handleScheduleReminder}
+                    tuition={selectedTuition}
+                    templates={messageTemplates}
+                />
+            )}
         </>
     );
 };
-
-// --- Form Components for Modals ---
-const TransactionForm: React.FC<{ transaction: Transaction | null; categories: Category[]; onSave: (data: Omit<Transaction, 'id'>) => void; onCancel: () => void; }> = ({ transaction, categories, onSave, onCancel }) => {
-    const [date, setDate] = useState(transaction?.date || new Date().toISOString().split('T')[0]);
-    const [description, setDescription] = useState(transaction?.description || '');
-    const [type, setType] = useState<Transaction['type']>(transaction?.type || 'Receita');
-    const [categoryId, setCategoryId] = useState(transaction?.categoryId.toString() || '');
-    const [amount, setAmount] = useState(transaction?.amount.toString() || '');
-    const [paymentMethod, setPaymentMethod] = useState<Transaction['paymentMethod']>(transaction?.paymentMethod || 'Dinheiro');
-    const filteredCategories = categories.filter(c => c.type === type);
-    React.useEffect(() => { if (!filteredCategories.some(c => c.id.toString() === categoryId)) setCategoryId(''); }, [type, filteredCategories, categoryId]);
-    const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onSave({ date, description, type, categoryId: parseInt(categoryId), amount: parseFloat(amount), paymentMethod }); }
-    return <form onSubmit={handleSubmit} className="space-y-4"><Input id="date" label="Data" type="date" value={date} onChange={e => setDate(e.target.value)} required /><Input id="description" label="Descrição" value={description} onChange={e => setDescription(e.target.value)} required /><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><Select id="type" label="Tipo" value={type} onChange={e => setType(e.target.value as Transaction['type'])}><option value="Receita">Receita</option><option value="Despesa">Despesa</option></Select><Input id="amount" label="Valor (MZN)" type="number" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} required /></div><Select id="category" label="Categoria" value={categoryId} onChange={e => setCategoryId(e.target.value)} required><option value="">Selecione uma categoria</option>{filteredCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</Select><Select id="paymentMethod" label="Método de Pagamento" value={paymentMethod} onChange={e => setPaymentMethod(e.target.value as Transaction['paymentMethod'])}><option value="Dinheiro">Dinheiro</option><option value="Transferência">Transferência Bancária</option><option value="Digital">Digital (M-Pesa, e-Mola)</option></Select><div className="flex justify-end gap-4 pt-4"><Button type="button" variant="secondary" onClick={onCancel}>Cancelar</Button><Button type="submit">Salvar</Button></div></form>
-}
-const CategoryForm: React.FC<{ category: Category | null; onSave: (name: string) => void; onCancel: () => void; }> = ({ category, onSave, onCancel }) => {
-    const [name, setName] = useState(category?.name || '');
-    const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onSave(name); }
-    return <form onSubmit={handleSubmit} className="space-y-4"><Input id="category-name" label="Nome da Categoria" value={name} onChange={e => setName(e.target.value)} required /><div className="flex justify-end gap-4 pt-4"><Button type="button" variant="secondary" onClick={onCancel}>Cancelar</Button><Button type="submit">Salvar</Button></div></form>;
-};
-const ScholarshipForm: React.FC<{ scholarship: Scholarship | null; onSave: (data: Omit<Scholarship, 'id'>) => void; onCancel: () => void; }> = ({ scholarship, onSave, onCancel }) => {
-    const [name, setName] = useState(scholarship?.name || '');
-    const [type, setType] = useState<Scholarship['type']>(scholarship?.type || 'Percentagem');
-    const [value, setValue] = useState(scholarship?.value.toString() || '');
-    const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onSave({ name, type, value: Number(value) }); }
-    return <form onSubmit={handleSubmit} className="space-y-4"><Input id="scholarship-name" label="Nome da Bolsa" value={name} onChange={e => setName(e.target.value)} required /><div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><Select id="scholarship-type" label="Tipo" value={type} onChange={e => setType(e.target.value as Scholarship['type'])}><option value="Percentagem">Percentagem</option><option value="Valor Fixo">Valor Fixo</option></Select><Input id="scholarship-value" label={type === 'Percentagem' ? 'Valor (%)' : 'Valor (MZN)'} type="number" value={value} onChange={e => setValue(e.target.value)} required /></div><div className="flex justify-end gap-4 pt-4"><Button type="button" variant="secondary" onClick={onCancel}>Cancelar</Button><Button type="submit">Salvar</Button></div></form>;
-};
-const MessageTemplateForm: React.FC<{ template: MessageTemplate | null; onSave: (data: Omit<MessageTemplate, 'id'> & {id?:number}) => void; onCancel: () => void; }> = ({ template, onSave, onCancel }) => {
-    const [name, setName] = useState(template?.name || '');
-    const [shortcut, setShortcut] = useState(template?.shortcut || '');
-    const [content, setContent] = useState(template?.content || '');
-    const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); onSave({ id: template?.id, name, shortcut, content }); }
-    return <form onSubmit={handleSubmit} className="space-y-4"><Input id="template-name" label="Nome do Modelo" value={name} onChange={e => setName(e.target.value)} required /><Input id="template-shortcut" label="Atalho" value={shortcut} onChange={e => setShortcut(e.target.value)} required placeholder="Ex: /lembrete1" /><div><label htmlFor="template-content" className="block text-sm font-medium mb-1">Conteúdo</label><textarea id="template-content" rows={5} value={content} onChange={e => setContent(e.target.value)} className="w-full p-2 border rounded-lg dark:bg-slate-700 dark:border-slate-600" required /><p className="text-xs text-slate-500 mt-1">Use {`{aluno}`}, {`{mes}`}, e {`{valor}`} para substituição automática.</p></div><div className="flex justify-end gap-4 pt-4"><Button type="button" variant="secondary" onClick={onCancel}>Cancelar</Button><Button type="submit">Salvar Modelo</Button></div></form>
-}
 
 export default Financial;

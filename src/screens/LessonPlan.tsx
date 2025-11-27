@@ -1,18 +1,18 @@
-
-
 import React, { useState, useMemo, FC, useEffect } from 'react';
-import PageHeader from '../components/Header';
+import PageHeader from '@/components/Header';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
-import { SparklesIcon } from '../components/icons';
-import { LessonPlan, Subject, AIConfiguration } from '../types';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
+import { SparklesIcon } from '@/components/icons';
+import { LessonPlan, Subject, AIConfiguration } from '@/types';
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
-import { useData } from '../context/DataContext';
-import { useAuth } from '../context/AuthContext';
+import { useAdminData } from '@/context/AdminContext';
+import { useCoreData } from '@/context/CoreDataContext';
+import { useAcademicData } from '@/context/AcademicContext';
+import { useAuth } from '@/context/AuthContext';
 
 const AIAssistantModal: FC<{
   isOpen: boolean;
@@ -20,7 +20,7 @@ const AIAssistantModal: FC<{
   onApply: (data: { objectives: string; content: string; resources: string; }) => void;
   subjectName: string;
 }> = ({ isOpen, onClose, onApply, subjectName }) => {
-    const { aiConfiguration } = useData();
+    const { aiConfiguration } = useAdminData();
     const [formValues, setFormValues] = useState<Record<string, string>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<{ objectives: string; content: string; resources: string; } | null>(null);
@@ -61,7 +61,6 @@ const AIAssistantModal: FC<{
                 model: 'gemini-2.5-flash',
                 contents: prompt,
                 config: {
-                    // FIX: Corrected typo in the responseSchema descriptions.
                     systemInstruction: `Você é um assistente especialista na criação de planos de aula seguindo a Abordagem Educacional por Princípios (AEP), uma metodologia cristã. Sua base de conhecimento sobre AEP é o texto a seguir: "${aiConfiguration.trainingText}". Ao gerar o plano, estruture a resposta em JSON com as chaves "objectives", "content", e "resources". O conteúdo e as atividades devem refletir os 4 passos do raciocínio da AEP (Pesquisar, Raciocinar, Relacionar, Registrar).`,
                     responseMimeType: "application/json",
                     responseSchema: {
@@ -84,10 +83,7 @@ const AIAssistantModal: FC<{
                 }
             });
 
-            // FIX: Per the guidelines, response.text should be a string.
-            // Using String() handles potential typing issues where it is inferred as 'unknown'.
-            const resultText = String(response.text).trim();
-            const data = JSON.parse(resultText);
+            const data = JSON.parse(response.text.trim());
             setResult(data);
 
         } catch (error) {
@@ -99,7 +95,7 @@ const AIAssistantModal: FC<{
         }
     };
 
-    const isGenerateDisabled = isLoading || Object.values(formValues).every(value => value.trim() === '');
+    const isGenerateDisabled = isLoading || Object.values(formValues).every(value => String(value).trim() === '');
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Assistente de IA para Planos de Aula (AEP)">
@@ -161,7 +157,8 @@ const AIAssistantModal: FC<{
 
 const LessonPlan: React.FC = () => {
   const { user } = useAuth();
-  const { classes, subjects, classCurriculum, lessonPlans, teachers } = useData(); // TODO: Add CRUD functions
+  const { classes, subjects, classCurriculum, teachers } = useCoreData();
+  const { lessonPlans } = useAcademicData();
   const [plans, setPlans] = useState<LessonPlan[]>(lessonPlans);
   
   // Modal states

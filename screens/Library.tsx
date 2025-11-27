@@ -1,37 +1,31 @@
-
-
-import React, { useState, useMemo } from 'react';
-import PageHeader from '../components/Header';
-import DataTable from '../components/DataTable';
-import { Book, BookLoan } from '../types';
-import { Badge } from '../components/ui/Badge';
-import { Button } from '../components/ui/Button';
-import { Modal } from '../components/ui/Modal';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
+import React, { useState, useMemo, FC } from 'react';
+import { useNavigate } from 'react-router-dom';
+import PageHeader from '@/components/Header';
+import DataTable from '@/components/DataTable';
+import { Book, BookLoan } from '@/types';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { useData } from '../context/DataContext';
+import { useAdminData } from '@/context/AdminContext';
+import { useCoreData } from '@/context/CoreDataContext';
 
 type Tab = 'catalog' | 'loans';
 
 const Library: React.FC = () => {
-    const { books, bookLoans, students, addBook, addLoan, returnLoan, deleteBook } = useData();
+    const { books, bookLoans, addLoan, returnLoan, deleteBook } = useAdminData();
+    const { students } = useCoreData();
     const [activeTab, setActiveTab] = useState<Tab>('catalog');
+    const navigate = useNavigate();
 
     // Modal States
-    const [isBookModalOpen, setBookModalOpen] = useState(false);
     const [isLoanModalOpen, setLoanModalOpen] = useState(false);
     
     // Form States
-    const [newBook, setNewBook] = useState<Omit<Book, 'id' | 'availableStock'>>({ title: '', author: '', isbn: '', totalStock: 1 });
     const [newLoan, setNewLoan] = useState<Omit<BookLoan, 'id'|'status'>>({ bookId: 0, studentId: 0, loanDate: new Date().toISOString().split('T')[0], dueDate: '' });
     
-    const handleSaveBook = () => {
-        addBook(newBook);
-        setBookModalOpen(false);
-        setNewBook({ title: '', author: '', isbn: '', totalStock: 1 });
-    };
-
     const handleSaveLoan = () => {
         if (!newLoan.bookId || !newLoan.studentId || !newLoan.dueDate) {
             alert("Preencha todos os campos.");
@@ -67,7 +61,7 @@ const Library: React.FC = () => {
         book.availableStock,
         <Badge variant={book.availableStock > 0 ? 'success' : 'default'}>{book.availableStock > 0 ? 'Disponível' : 'Indisponível'}</Badge>,
         <div className="flex">
-            <Button variant="link" size="sm" onClick={() => alert('Edição de livros a ser implementada.')}><PencilIcon className="h-4 w-4 mr-1"/>Editar</Button>
+            <Button variant="link" size="sm" onClick={() => navigate(`/biblioteca/${book.id}/editar`)}><PencilIcon className="h-4 w-4 mr-1"/>Editar</Button>
             <Button variant="link" size="sm" className="text-red-500" onClick={() => handleDeleteBook(book)}><TrashIcon className="h-4 w-4 mr-1"/>Remover</Button>
         </div>
     ]);
@@ -110,7 +104,7 @@ const Library: React.FC = () => {
                         <PlusIcon className="h-5 w-5 mr-2" />
                         Registar Empréstimo
                     </Button>
-                     <Button onClick={() => setBookModalOpen(true)}>
+                     <Button onClick={() => navigate('/biblioteca/novo')}>
                         <PlusIcon className="h-5 w-5 mr-2" />
                         Adicionar Livro
                     </Button>
@@ -129,20 +123,6 @@ const Library: React.FC = () => {
             </div>
             
             {renderContent()}
-
-            {/* Add Book Modal */}
-            <Modal isOpen={isBookModalOpen} onClose={() => setBookModalOpen(false)} title="Adicionar Novo Livro">
-                <form onSubmit={(e) => { e.preventDefault(); handleSaveBook(); }} className="space-y-4">
-                    <Input id="title" label="Título" value={newBook.title} onChange={e => setNewBook({...newBook, title: e.target.value})} required/>
-                    <Input id="author" label="Autor" value={newBook.author} onChange={e => setNewBook({...newBook, author: e.target.value})} required/>
-                    <Input id="isbn" label="ISBN" value={newBook.isbn} onChange={e => setNewBook({...newBook, isbn: e.target.value})}/>
-                    <Input id="stock" label="Quantidade em Stock" type="number" min="1" value={newBook.totalStock} onChange={e => setNewBook({...newBook, totalStock: parseInt(e.target.value) || 1})} required/>
-                     <div className="flex justify-end gap-4 pt-4">
-                        <Button type="button" variant="secondary" onClick={() => setBookModalOpen(false)}>Cancelar</Button>
-                        <Button type="submit">Adicionar Livro</Button>
-                    </div>
-                </form>
-            </Modal>
 
             {/* Add Loan Modal */}
              <Modal isOpen={isLoanModalOpen} onClose={() => setLoanModalOpen(false)} title="Registar Novo Empréstimo">

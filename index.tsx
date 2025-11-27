@@ -3,9 +3,9 @@ import ReactDOM from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './context/AuthContext';
-import { DataProvider } from './context/DataContext';
 import { ThemeProvider } from './context/ThemeContext';
 
+/*
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/service-worker.js').then(registration => {
@@ -15,6 +15,7 @@ if ('serviceWorker' in navigator) {
     });
   });
 }
+*/
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -27,9 +28,7 @@ root.render(
     <HashRouter>
       <ThemeProvider>
         <AuthProvider>
-          <DataProvider>
-            <App />
-          </DataProvider>
+          <App />
         </AuthProvider>
       </ThemeProvider>
     </HashRouter>
